@@ -114,7 +114,7 @@ app.post('/add-employee-details', (req, res) => {
     console.log(req.body);  // Log the received data
     const { EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN } = req.body;
 
-    const sql = 'INSERT INTO EMPLOYEE_DETAILS (EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN) VALUES (?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO EMPLOYEEDETAILS (EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN) VALUES (?, ?, ?, ?, ?)';
     const values = [EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN];
 
     db.query(sql, values, (err, result) => {
