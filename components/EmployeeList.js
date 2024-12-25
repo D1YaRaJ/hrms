@@ -23,15 +23,15 @@ const EmployeeManagement = () => {
     STATE: true,
     PINCODE: true,
     GENDER: true,
-    PROFESSIONALEXPERIENCEDESIGNATION: false,
-    PROFESSIONALEXPERIENCEFROM: false,
-    PROFESSIONALEXPERIENCETO: false,
-    LEAVEML: false,
-    LEAVELOP: false,
-    LEAVERH: false,
-    LEAVEOOD: false,
-    LEAVECL: false,
-    DEPARTMENTID: false
+    PROFEXP_DESIGNATION: true,
+    PPROFEXP_FROM: true,
+    PPROFEXP_TO: true,
+    LEAVE_ML: true,
+    LEAVE_LOP: true,
+    LEAVE_RH: true,
+    LEAVE_OOD: true,
+    LEAVE_CL: true,
+    DID: true
   });
 
   const columnAliases = {
@@ -53,15 +53,15 @@ const EmployeeManagement = () => {
     STATE: "State",
     PINCODE: "Pincode",
     GENDER: "Gender",
-    PROFESSIONALEXPERIENCEDESIGNATION: "Prof Exp Degn",
-    PROFESSIONALEXPERIENCEFROM: "Prof Exp From",
-    PROFESSIONALEXPERIENCETO: "Prof Exp To",
-    LEAVEML: "Leave ML",
-    LEAVELOP: "Leave LOP",
-    LEAVERH: "Leave RH",
-    LEAVEOOD: "Leave OOD",
-    LEAVECL: "Leave CL",
-    DEPARTMENTID: "Department ID"
+    PROFEXP_DESIGNATION: "Prof Exp Degn",
+    PPROFEXP_FROM: "Prof Exp From",
+    PPROFEXP_TO: "Prof Exp To",
+    LEAVE_ML: "Leave ML",
+    LEAVE_LOP: "Leave LOP",
+    LEAVE_RH: "Leave RH",
+    LEAVE_OOD: "Leave OOD",
+    LEAVE_CL: "Leave CL",
+    DID: "Department ID"
   };
 
   const fetchEmployees = async () => {
