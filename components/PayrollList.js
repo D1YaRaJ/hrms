@@ -11,7 +11,7 @@ const PayrollList = () => {
         PF: true,
         VA: true,
     });
-
+    const [eid, setEid] = useState('');
     const columnAliases = {
         EID: "Employee ID",
         P_DATE: "Payroll Date",
@@ -20,9 +20,11 @@ const PayrollList = () => {
         VA: "Vocation Allowance (VA)",
     };
 
-    const fetchPayrolls = async () => {
+    const fetchPayrolls = async (eid = '') => {
         try {
-            const response = await axios.get('http://localhost:5000/payroll');
+            const response = await axios.get('http://localhost:5000/payroll',{
+                params: { eid }
+            });
             setPayrolls(response.data);
         } catch (error) {
             console.error('Error fetching payroll data:', error);
@@ -34,6 +36,14 @@ const PayrollList = () => {
         setColumns({ ...columns, [column]: !columns[column] });
     };
 
+    const handleEidChange = (e) => {
+        setEid(e.target.value);
+    };
+
+    const handleSearch = () => {
+        fetchPayrolls(eid);
+    };
+
     useEffect(() => {
         fetchPayrolls();
     }, []);
@@ -41,7 +51,15 @@ const PayrollList = () => {
     return (
         <div>
             <h2>Payroll List</h2>
-
+            <div className="search-bar">
+                <input
+                    type="number"
+                    value={eid}
+                    onChange={handleEidChange}
+                    placeholder="Search by Employee ID"
+                />
+                <button onClick={handleSearch}>Search</button>
+            </div>
             <div className="column-selection">
                 <h3>Select Columns to Display</h3>
                 {Object.keys(columns).map((col) => (
