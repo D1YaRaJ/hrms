@@ -37,38 +37,94 @@ app.post('/add-employee', (req, res) => {
     });
   });
 
-//   app.post('/add-qualification', (req, res) => {
-//     console.log(req.body);  // Log the received data
-//     const { EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG } = req.body;
+  app.get('/departments', (req, res) => {
+    const sql = 'SELECT * FROM DEPARTMENT';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error fetching departments:', err);
+            res.status(500).send('Error fetching departments');
+        } else {
+            res.json(results);
+        }
+    });
+});
 
-//     const sql = 'INSERT INTO QUALIFICATION (EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG) VALUES (?, ?, ?, ?, ?)';
-//     const values = [EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG];
 
-//     db.query(sql, values, (err, result) => {
-//         if (err) {
-//             console.error(err);  // Log SQL error
-//             return res.status(500).send(err);
-//         }
-//         res.json({ message: 'Qualification added successfully', id: result.insertId });
-//     });
-// });
+app.post('/add-department', (req, res) => {
+    const { DID, DNAME, DHEAD } = req.body;  // Ensure correct structure of data
+    const sql = 'INSERT INTO DEPARTMENT (DID, DNAME, DHEAD) VALUES (?, ?, ?)';
+    
+    const values = [DID, DNAME, DHEAD];
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error('Error adding department:', err); // Log the error
+            res.status(500).send(err);
+        } else {
+            res.json({ message: 'Department added successfully', id: result.insertId });
+        }
+    });
+});
 
-// // API endpoint to add employee details
-// app.post('/add-employee-details', (req, res) => {
-//     console.log(req.body);  // Log the received data
-//     const { EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN } = req.body;
+app.get('/attendance', (req, res) => {
+    const sql = 'SELECT * FROM attendance';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error fetching attendance:', err);
+            res.status(500).send(err);
+        } else {
+            res.json(results);
+        }
+    });
+});
 
-//     const sql = 'INSERT INTO EMPLOYEE_DETAILS (EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN) VALUES (?, ?, ?, ?, ?)';
-//     const values = [EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN];
+app.post('/add-attendance', (req, res) => {
+    const { EID, A_DATE, STATUS, LOGIN, LOGOUT } = req.body;  // Ensure correct structure of data
+    const sql = 'INSERT INTO ATTENDANCE (EID, A_DATE, STATUS, LOGIN, LOGOUT) VALUES (?, ?, ?, ?, ?)';
+    
+    const values = [EID, A_DATE, STATUS, LOGIN, LOGOUT];
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error('Error adding attendance:', err.code);  // Log error code
+            res.status(500).send(`Error adding attendance: ${err.message}`);  // Send error message to frontend
+        } else {
+            res.json({ message: 'Attendance added successfully', id: result.insertId });
+        }
+    });
+});
 
-//     db.query(sql, values, (err, result) => {
-//         if (err) {
-//             console.error(err);  // Log SQL error
-//             return res.status(500).send(err);
-//         }
-//         res.json({ message: 'Employee details added successfully', id: result.insertId });
-//     });
-// });
+
+  app.post('/add-qualification', (req, res) => {
+    console.log(req.body);  // Log the received data
+    const { EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG } = req.body;
+
+    const sql = 'INSERT INTO QUALIFICATION (EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG) VALUES (?, ?, ?, ?, ?)';
+    const values = [EID, INSTITUTION, PERCENTAGE, SPECIALIZATION, YOG];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error(err);  // Log SQL error
+            return res.status(500).send(err);
+        }
+        res.json({ message: 'Qualification added successfully', id: result.insertId });
+    });
+});
+
+// API endpoint to add employee details
+app.post('/add-employee-details', (req, res) => {
+    console.log(req.body);  // Log the received data
+    const { EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN } = req.body;
+
+    const sql = 'INSERT INTO EMPLOYEE_DETAILS (EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN) VALUES (?, ?, ?, ?, ?)';
+    const values = [EID, BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error(err);  // Log SQL error
+            return res.status(500).send(err);
+        }
+        res.json({ message: 'Employee details added successfully', id: result.insertId });
+    });
+});
   app.post('/add-salary', (req, res) => {
     const { EID, BASIC_SAL, AGP, ESI, LOAN, IT } = req.body;
 
@@ -153,36 +209,16 @@ app.get('/families', (req, res) => {
 
 // API endpoint to get all leave entries
 app.get('/leave', (req, res) => {
-    const { searchDate } = req.query;
-    if (!searchDate) {
-      return res.status(400).send({ error: 'Search date is required' });
-  }
-  // SQL query to call the stored procedure
-   sql = 'CALL GetLeavesByDate(?)';  // Pass the searchDate as a parameter
-  console.log('SQL Query:', sql);
-  db.query(sql, [searchDate], (err, results) => {
+    const sql = 'SELECT * FROM LEAVES';
+    db.query(sql, (err, results) => {
       if (err) {
-          console.error("database error",err);
-          return res.status(500).send({ error: 'Failed to fetch leave data' });
+        res.status(500).send(err);
+      } else {
+        res.json(results);
       }
-      // Send the result from the procedure to the frontend
-      res.json(results[0]);  // `results[0]` because the stored procedure returns an array of results
+    });
   });
-  //   const sql = 'SELECT * FROM LEAVES';
-  //   const params = [];
-  //   if (searchDate) {
-  //     sql += ' WHERE ? BETWEEN FROM_DATE AND TO_DATE';
-  //     params.push(searchDate);
-  // }
-  //   db.query(sql,params, (err, results) => {
-  //     if (err) {
-  //       res.status(500).send(err);
-  //     } else {
-  //       res.json(results);
-  //     }
-  //   });
-  });
-  
+
   // API endpoint to add a new leave entry
   app.post('/add-leave', (req, res) => {
     console.log(req.body); // Log the received data
@@ -207,16 +243,24 @@ app.get('/leave', (req, res) => {
   
   
 // API endpoint to get all payroll entries
+// Define the endpoint to fetch payroll data
 app.get('/payroll', (req, res) => {
-    const sql = 'SELECT * FROM PAYROLL';
-    db.query(sql, (err, results) => {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.json(results);
-      }
+    const { eid } = req.query;
+    let sql = 'SELECT * FROM PAYROLL';
+    let values = [];
+    if (eid) {
+        sql += ' WHERE EID = ?';
+        values = [eid];
+    }
+
+    db.query(sql, values, (err, results) => {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            res.json(results);
+        }
     });
-  });
+});
 
 // API endpoint to add a new payroll entry
 app.post('/add-payroll', (req, res) => {
