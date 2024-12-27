@@ -1,0 +1,5 @@
+install library:
+npm i express
+npm i cors
+npm i mysql2
+npm i react-router-dom

@@ -1,0 +1,37 @@
+/* ViewFamily.css */
+.column-selection {
+    margin: 20px 0;
+}
+
+.column-selection label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.column-selection input {
+    margin-right: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #4CAF50;
+    color: black;
+}
+
+td {
+    background-color: #f9f9f9;
+}
