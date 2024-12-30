@@ -36,14 +36,7 @@ const AddPayroll = ({ onPayrollAdded }) => {
       });
       alert('Payroll added successfully!');
       console.log(response.data);
-      onPayrollAdded(); // Call the callback to refresh the payroll list
-      setFormData({
-        EID: '',
-        P_DATE: '',
-        NO_OF_DAYS: '',
-        PF: '',
-        VA: '',
-      });
+      
     } catch (error) {
       console.error('Error adding payroll:', error);
       alert('Failed to add payroll');
