@@ -37,15 +37,6 @@ const AddLeave = ({ onLeaveAdded }) => {
       });
       alert('Leave added successfully!');
       console.log(response.data);
-      onLeaveAdded(); // Call the callback to refresh the leave list
-      setFormData({
-        EID: '',
-        LTYPE: '',
-        APPROVAL: 'PENDING',
-        NO_OF_DAYS: '',
-        FROM_DATE: '',
-        TO_DATE: ''
-      });
     } catch (error) {
       console.error('Error adding leave:', error);
       alert('Failed to add leave');
