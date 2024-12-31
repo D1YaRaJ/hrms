@@ -294,8 +294,19 @@ app.get('/leave', (req, res) => {
       res.json({ message: 'Leave added successfully', id: result.insertId });
     });
   });
-  
-  
+
+app.delete('/leave/:eid', (req, res) => {
+  const { eid } = req.params;
+
+  const sqlDelete = 'DELETE FROM LEAVES WHERE EID = ?';
+  db.query(sqlDelete, [eid], (err, result) => {
+    if (err) {
+      console.error('Error deleting leave record:', err);
+      return res.status(500).send({ message: 'Failed to delete leave record', error: err.message });
+    }
+    res.status(200).json({ message: 'Leave record deleted successfully' });
+  });
+});
   
 // API endpoint to get all payroll entries
 // Define the endpoint to fetch payroll data
