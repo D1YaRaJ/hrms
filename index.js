@@ -473,7 +473,57 @@ app.put('/departments/:did', (req, res) => {
     });
 });
 
+app.delete('/payroll/:eid', (req, res) => {
+    const { eid } = req.params;
+  
+    const sqlDelete = 'DELETE FROM PAYROLL WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+      if (err) {
+        console.error('Error deleting payroll record:', err);
+        return res.status(500).send({ message: 'Failed to delete payroll record', error: err.message });
+      }
+      res.status(200).json({ message: 'payroll record deleted successfully' });
+    });
+  });
 
+app.delete('/employee-accounts/:eid', (req, res) => {
+    const { eid } = req.params;
+  
+    const sqlDelete = 'DELETE FROM EMPLOYEEDETAILS WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+      if (err) {
+        console.error('Error deleting  record:', err);
+        return res.status(500).send({ message: 'Failed to delete record', error: err.message });
+      }
+      res.status(200).json({ message: ' record deleted successfully' });
+    });
+  });
+
+app.delete('/qualifications/:eid', (req, res) => {
+    const { eid } = req.params;
+  
+    const sqlDelete = 'DELETE FROM QUALIFICATION WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+      if (err) {
+        console.error('Error deleting  record:', err);
+        return res.status(500).send({ message: 'Failed to delete record', error: err.message });
+      }
+      res.status(200).json({ message: ' record deleted successfully' });
+    });
+  });
+
+app.delete('/salaries/:eid', (req, res) => {
+    const { eid } = req.params;
+  
+    const sqlDelete = 'DELETE FROM SALARY WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+      if (err) {
+        console.error('Error deleting  record:', err);
+        return res.status(500).send({ message: 'Failed to delete record', error: err.message });
+      }
+      res.status(200).json({ message: ' record deleted successfully' });
+    });
+  });
 
 const PORT = 5000;
 app.listen(PORT, () => {
