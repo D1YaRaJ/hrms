@@ -4,43 +4,109 @@ import './ViewFamily.css';
 
 const ViewFamily = () => {
     const [familyDetails, setFamilyDetails] = useState([]);
+    const [filteredDetails, setFilteredDetails] = useState([]);
     const [columns, setColumns] = useState({
         EID: true,
         FNAME: true,
         F_DOB: true,
         MNAME: true,
-        M_DOB: true
+        M_DOB: true,
     });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [editRow, setEditRow] = useState(null);
+    const [editData, setEditData] = useState({});
 
     const columnAliases = {
         EID: "Employee ID",
         FNAME: "Family Member Name",
         F_DOB: "Family Member DOB",
         MNAME: "Mother's Name",
-        M_DOB: "Mother's DOB"
+        M_DOB: "Mother's DOB",
     };
 
     const fetchFamilyDetails = async () => {
         try {
             const response = await axios.get('http://localhost:5000/families');
             setFamilyDetails(response.data);
+            setFilteredDetails(response.data);
         } catch (error) {
-            console.error('Error fetching family details:', error);
-            alert('Failed to fetch family details');
+            console.error('Error fetching family details:', error.message);
+            alert('Failed to fetch family details. Please try again later.');
         }
     };
 
+    const handleSearch = (e) => {
+        const term = e.target.value.toLowerCase();
+        setSearchTerm(term);
+
+        const filtered = familyDetails.filter((family) =>
+            Object.values(family)
+                .join(' ')
+                .toLowerCase()
+                .includes(term)
+        );
+        setFilteredDetails(filtered);
+    };
+
     const handleColumnToggle = (column) => {
-        setColumns({ ...columns, [column]: !columns[column] });
+        setColumns((prevColumns) => ({
+            ...prevColumns,
+            [column]: !prevColumns[column],
+        }));
+    };
+
+    const handleEditClick = (row) => {
+        setEditRow(row);
+        const rowData = { ...row };
+        if (row.F_DOB) rowData.F_DOB = row.F_DOB.split('T')[0];
+        if (row.M_DOB) rowData.M_DOB = row.M_DOB.split('T')[0];
+        setEditData(rowData);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setEditData({ ...editData, [name]: value });
+    };
+
+    const handleSave = async () => {
+        try {
+            await axios.put(`http://localhost:5000/families/${editData.EID}`, editData);
+            const updatedDetails = familyDetails.map((family) =>
+                family.EID === editData.EID ? editData : family
+            );
+            setFamilyDetails(updatedDetails);
+            setFilteredDetails(updatedDetails);
+
+            setEditRow(null);
+            setEditData({});
+            alert('Family details updated successfully');
+        } catch (error) {
+            console.error('Error saving family details:', error.message);
+            alert('Failed to save changes. Please try again later.');
+        }
     };
 
     useEffect(() => {
         fetchFamilyDetails();
     }, []);
 
+    const activeColumns = Object.keys(columns).filter((col) => columns[col]);
+
     return (
         <div>
             <h1>Family Details</h1>
+
+            {/* Search Bar */}
+            <div className="search-bar">
+                <input
+                    type="text"
+                    placeholder="Search family details..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                />
+            </div>
+
+            {/* Column Selection */}
             <div className="column-selection">
                 <h3>Select Columns to Display</h3>
                 {Object.keys(columns).map((col) => (
@@ -49,32 +115,83 @@ const ViewFamily = () => {
                             type="checkbox"
                             checked={columns[col]}
                             onChange={() => handleColumnToggle(col)}
+                            aria-label={`Toggle ${columnAliases[col] || col}`}
                         />
-                        {columnAliases[col] || col} {/* Display alias name or original if no alias */}
+                        {columnAliases[col] || col}
                     </label>
                 ))}
             </div>
 
-            <table border="1" style={{ marginTop: '20px', width: '100%' }}>
+            {/* Table */}
+            <table className="family-table">
                 <thead>
                     <tr>
-                        {Object.keys(columns).map(
-                            (col) =>
-                                columns[col] && <th key={col}>{columnAliases[col]}</th> // Display alias name
-                        )}
+                        {activeColumns.map((col) => (
+                            <th key={col}>{columnAliases[col]}</th>
+                        ))}
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {familyDetails.map((family, index) => (
+                    {filteredDetails.map((family, index) => (
                         <tr key={index}>
-                            {Object.keys(columns).map(
-                                (col) =>
-                                    columns[col] && <td key={col}>{family[col] || 'N/A'}</td>
-                            )}
+                            {activeColumns.map((col) => (
+                                <td key={col}>{family[col] || 'N/A'}</td>
+                            ))}
+                            <td>
+                                <button onClick={() => handleEditClick(family)}>Modify</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+
+            {/* Edit Form as Full-Screen Popup */}
+            {editRow && (
+                <div className="edit-form-popup">
+                    <div className="edit-form-content">
+                        <h2>Modify Family Details</h2>
+                        <div className="form-group">
+                            <label>Family Member Name:</label>
+                            <input
+                                type="text"
+                                name="FNAME"
+                                value={editData.FNAME}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Family Member DOB:</label>
+                            <input
+                                type="date"
+                                name="F_DOB"
+                                value={editData.F_DOB}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Mother's Name:</label>
+                            <input
+                                type="text"
+                                name="MNAME"
+                                value={editData.MNAME}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Mother's DOB:</label>
+                            <input
+                                type="date"
+                                name="M_DOB"
+                                value={editData.M_DOB}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <button onClick={handleSave}>Save</button>
+                        <button onClick={() => setEditRow(null)}>Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
