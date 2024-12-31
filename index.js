@@ -65,6 +65,19 @@ app.post('/add-department', (req, res) => {
     });
 });
 
+app.delete('/departmentS/:did', (req, res) => {
+    const { did } = req.params;
+  
+    const sqlDelete = 'DELETE FROM DEPARTMENT WHERE DID = ?';
+    db.query(sqlDelete, [did], (err, result) => {
+      if (err) {
+        console.error('Error deleting department:', err);
+        return res.status(500).send({ message: 'Failed to delete department', error: err.message });
+      }
+      res.status(200).json({ message: 'Department deleted successfully' });
+    });
+  });
+
 app.get('/attendance', (req, res) => {
     const sql = 'SELECT * FROM attendance';
     db.query(sql, (err, results) => {
