@@ -36,6 +36,18 @@ const LeaveList = () => {
         setColumns({ ...columns, [column]: !columns[column] });
     };
 
+    const handleDelete = async (eid) => {
+        try {
+            await axios.delete(`http://localhost:5000/leave/${eid}`);
+            const updatedLeaves = leaves.filter((leave) => leave.EID !== eid);
+            setLeaves(updatedLeaves);
+            alert('Leave record deleted successfully');
+        } catch (error) {
+            console.error('Error deleting leave record:', error);
+            alert('Failed to delete leave record');
+        }
+    };
+
     return (
         <div>
             <h2>Leave List</h2>
@@ -70,6 +82,9 @@ const LeaveList = () => {
                                 (col) =>
                                     columns[col] && <td key={col}>{leave[col] || 'N/A'}</td>
                             )}
+                            <td>
+                                <button onClick={() => handleDelete(leave.EID)}>Delete</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
