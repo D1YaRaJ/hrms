@@ -306,7 +306,58 @@ app.post('/add-payroll', (req, res) => {
       res.json({ message: 'Payroll added successfully', id: result.insertId });
     });
 });
-  
+
+
+
+
+///// NEW API FOR FAMILY
+
+app.get('/families/:eid', (req, res) => {
+    const { eid } = req.params;
+
+    db.query('CALL FilterFamilyByEID(?)', [eid], (err, results) => {
+        if (err) {
+            console.error('Error executing procedure:', err);
+            return res.status(500).send('Error fetching family details');
+        }
+
+        if (results.length > 0 && results[0].length > 0) {
+            res.json(results[0]); // Return the result from the first index
+        } else {
+            res.status(404).send('No family details found for the given EID');
+        }
+    });
+});
+
+// New PUT route to update family details
+app.put('/families/:eid', (req, res) => {
+    const { eid } = req.params;
+    const { FNAME, F_DOB, MNAME, M_DOB } = req.body;
+
+    // Convert date values to MySQL-compatible format (YYYY-MM-DD)
+    const formattedFDOB = new Date(F_DOB).toISOString().split('T')[0];
+    const formattedMDOB = new Date(M_DOB).toISOString().split('T')[0];
+
+    const query = `
+        UPDATE family
+        SET FNAME = ?, F_DOB = ?, MNAME = ?, M_DOB = ?
+        WHERE EID = ?
+    `;
+
+    db.query(query, [FNAME, formattedFDOB, MNAME, formattedMDOB, eid], (err, results) => {
+        if (err) {
+            console.error('Error updating family details:', err);
+            return res.status(500).send('Failed to update family details');
+        }
+
+        if (results.affectedRows > 0) {
+            res.send('Family details updated successfully');
+        } else {
+            res.status(404).send('No family details found for the given EID');
+        }
+    });
+});
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
