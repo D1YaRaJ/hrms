@@ -34,6 +34,24 @@ const ViewEmployeeAccount = () => {
     setColumns({ ...columns, [column]: !columns[column] });
   };
 
+  const handleDelete = async (eid) => {
+    try {
+      // Send DELETE request to backend
+      await axios.delete(`http://localhost:5000/employee-accounts/${eid}`);
+      
+      // Update the UI to reflect the deletion
+      const updatedEmployeeDetails = employeeDetails.filter(
+        (employee) => employee.EID !== eid
+      );
+      setEmployeeDetails(updatedEmployeeDetails);
+
+      alert('Employee account deleted successfully');
+    } catch (error) {
+      console.error('Error deleting employee account:', error);
+      alert('Failed to delete employee account');
+    }
+  };
+
   useEffect(() => {
     fetchEmployeeDetails();
   }, []);
@@ -69,6 +87,10 @@ const ViewEmployeeAccount = () => {
               {Object.keys(columns).map(
                 (col) => columns[col] && <td key={col}>{employee[col] || 'N/A'}</td>
               )}
+              <td>
+                {/* Delete button for each row */}
+                <button onClick={() => handleDelete(employee.EID)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
