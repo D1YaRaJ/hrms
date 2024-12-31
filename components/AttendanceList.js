@@ -14,6 +14,22 @@ function AttendanceList() {
         }
     };
 
+    const handleDelete = async (eid) => {
+        try {
+            await axios.delete(`http://localhost:5000/attendance/${eid}`);
+            // Remove the deleted record from the state
+            setAttendance((prevAttendance) =>
+                prevAttendance.filter(
+                    (record) => record.EID !== eid
+                )
+            );
+            alert('Attendance record deleted successfully');
+        } catch (error) {
+            console.error('Error deleting attendance record:', error);
+            alert('Failed to delete attendance record');
+        }
+    };
+    
     useEffect(() => {
         fetchAttendance();
     }, []);
@@ -39,6 +55,11 @@ function AttendanceList() {
                             <td>{record.STATUS}</td>
                             <td>{record.LOGIN}</td>
                             <td>{record.LOGOUT}</td>
+                            <td>
+                                <button onClick={() => handleDelete(record.EID)}>
+                                    Delete
+                                </button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
