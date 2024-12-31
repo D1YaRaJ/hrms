@@ -78,6 +78,21 @@ const DepartmentManagement = () => {
     }
   };
 
+  const handleDelete = async (did) => {
+    try {
+      await axios.delete(`http://localhost:5000/departmentS/${did}`);
+      const updatedDepartments = departments.filter(
+        (department) => department.DID !== did
+      );
+      setDepartments(updatedDepartments);
+      setFilteredDepartments(updatedDepartments);
+      alert('Department deleted successfully');
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      alert('Failed to delete department');
+    }
+  };
+  
   useEffect(() => {
     fetchDepartments();
   }, []);
@@ -132,6 +147,7 @@ const DepartmentManagement = () => {
               ))}
               <td>
                 <button onClick={() => handleEditClick(department)}>Modify</button>
+                <button onClick={() => handleDelete(department.DID)}>Delete</button>
               </td>
             </tr>
           ))}
