@@ -92,6 +92,18 @@ app.post('/add-attendance', (req, res) => {
     });
 });
 
+app.delete('/attendance/:eid', (req, res) => {
+    const { eid } = req.params;
+
+    const sqlDelete = 'DELETE FROM ATTENDANCE WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+        if (err) {
+            console.error('Error deleting attendance record:', err);
+            return res.status(500).send({ message: 'Failed to delete attendance record', error: err.message });
+        }
+        res.status(200).json({ message: 'Attendance record deleted successfully' });
+    });
+});
 
   app.post('/add-qualification', (req, res) => {
     console.log(req.body);  // Log the received data
@@ -358,7 +370,35 @@ app.put('/families/:eid', (req, res) => {
     });
 });
 
+app.delete('/families/:eid', (req, res) => {
+    const { eid } = req.params;
 
+    const sqlDelete = 'DELETE FROM FAMILY WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+        if (err) {
+            console.error('Error deleting family details:', err);
+            return res.status(500).send({ message: 'Failed to delete family details', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).send({ message: 'Family details not found' });
+        }
+        res.status(200).json({ message: 'Family details deleted successfully' });
+    });
+});
+
+app.delete('/employees/:eid', (req, res) => {
+    const { eid } = req.params;
+
+    // Delete the employee from the EMPLOYEE table
+    const sqlDelete = 'DELETE FROM EMPLOYEE WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
+        if (err) {
+            console.error('Error deleting employee:', err);
+            return res.status(500).send({ message: 'Failed to delete employee', error: err.message });
+        }
+        res.status(200).json({ message: 'Employee and related records deleted successfully' });
+    });
+});
 
 // Search for a department by DID or DNAME
 app.get('/departments/search', (req, res) => {
