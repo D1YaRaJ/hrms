@@ -48,6 +48,22 @@ const Salary = () => {
     }
   };
 
+  const handleDelete = async (eid) => {
+    try {
+      // Send DELETE request to backend to delete the salary entry
+      await axios.delete(`http://localhost:5000/salaries/${eid}`);
+      
+      // After deletion, update the UI by filtering out the deleted salary
+      const updatedSalaries = salaries.filter(salary => salary.EID !== eid);
+      setSalaries(updatedSalaries);
+
+      alert('Salary entry deleted successfully');
+    } catch (error) {
+      console.error('Error deleting salary entry:', error);
+      alert('Failed to delete salary entry');
+    }
+  };
+
   const handleColumnToggle = (column) => {
     setColumns({ ...columns, [column]: !columns[column] });
   };
@@ -94,7 +110,9 @@ const Salary = () => {
                       >
                         View
                       </button>
+                      <button onClick={() => handleDelete(salary.EID)}>Delete</button>
                     </td>
+                    
                   );
                 }
 
