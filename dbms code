@@ -209,3 +209,22 @@ BEGIN
 END $$
 DELIMITER ;
 
+
+DELIMITER $$
+
+CREATE PROCEDURE SearchDepartment(
+    IN search_DID INT,
+    IN search_DNAME VARCHAR(255),
+    IN search_DHEAD VARCHAR(255)
+)
+BEGIN
+    -- Select departments based on the provided search criteria
+    SELECT * 
+    FROM DEPARTMENT
+    WHERE (DID = search_DID OR search_DID IS NULL)
+    AND (DNAME LIKE CONCAT('%', search_DNAME, '%') OR search_DNAME IS NULL)
+    AND (DHEAD LIKE CONCAT('%', search_DHEAD, '%') OR search_DHEAD IS NULL);
+END$$
+
+DELIMITER ;
+
