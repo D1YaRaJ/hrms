@@ -358,6 +358,59 @@ app.put('/families/:eid', (req, res) => {
     });
 });
 
+
+
+// Search for a department by DID or DNAME
+app.get('/departments/search', (req, res) => {
+    const { DID, DNAME } = req.query;
+
+    let sql = 'SELECT * FROM DEPARTMENT WHERE 1';
+    let values = [];
+
+    if (DID) {
+        sql += ' AND DID = ?';
+        values.push(DID);
+    }
+
+    if (DNAME) {
+        sql += ' AND DNAME = ?';
+        values.push(DNAME);
+    }
+
+    db.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('Error searching for department:', err);
+            return res.status(500).send('Error searching for department');
+        }
+        res.json(results);
+    });
+});
+
+
+// Update department details
+app.put('/departments/:did', (req, res) => {
+    const { did } = req.params;
+    const { DNAME, DHEAD } = req.body;
+
+    const sql = 'UPDATE DEPARTMENT SET DNAME = ?, DHEAD = ? WHERE DID = ?';
+    const values = [DNAME, DHEAD, did];
+
+    db.query(sql, values, (err, result) => {
+        if (err) {
+            console.error('Error updating department:', err);
+            return res.status(500).send('Error updating department');
+        }
+
+        if (result.affectedRows > 0) {
+            res.send('Department updated successfully');
+        } else {
+            res.status(404).send('Department not found');
+        }
+    });
+});
+
+
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
