@@ -44,6 +44,24 @@ const PayrollList = () => {
         fetchPayrolls(eid);
     };
 
+    const handleDelete = async (eid) => {
+        try {
+            // Send DELETE request to backend
+            await axios.delete(`http://localhost:5000/payroll/${eid}`);
+            
+            // Update the UI to reflect the deletion
+            const updatedPayrolls = payrolls.filter(
+                (payroll) => payroll.EID !== eid
+            );
+            setPayrolls(updatedPayrolls);
+
+            alert('Payroll entry deleted successfully');
+        } catch (error) {
+            console.error('Error deleting payroll entry:', error);
+            alert('Failed to delete payroll entry');
+        }
+    };
+
     useEffect(() => {
         fetchPayrolls();
     }, []);
@@ -90,6 +108,9 @@ const PayrollList = () => {
                                 (col) =>
                                     columns[col] && <td key={col}>{payroll[col] || 'N/A'}</td>
                             )}
+                            <td>
+                                <button onClick={() => handleDelete(payroll.EID)}>Delete</button>
+                            </td>
                         </tr>
                     ))}
                 </tbody>
