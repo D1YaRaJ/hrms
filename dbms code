@@ -183,3 +183,29 @@ END $$
 DELIMITER ;
 
 CALL FilterPayrollByEID(3);
+
+
+
+
+
+
+
+
+
+//
+DELIMITER $$
+CREATE PROCEDURE FilterFamilyByEID(
+    IN p_EID INT
+)
+BEGIN
+    SELECT 
+        EID AS 'Employee ID',
+        FNAME AS 'Family Member Name',
+        F_DOB AS 'Family Member DOB',
+        MNAME AS 'Mother''s Name', -- Escape single quote with another single quote
+        M_DOB AS 'Mother''s DOB'
+    FROM FAMILY
+    WHERE EID = p_EID;
+END $$
+DELIMITER ;
+
