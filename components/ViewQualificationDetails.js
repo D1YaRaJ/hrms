@@ -34,6 +34,24 @@ const ViewQualificationDetails = () => {
     setColumns({ ...columns, [column]: !columns[column] });
   };
 
+  const handleDelete = async (eid) => {
+    try {
+      // Send DELETE request to backend
+      await axios.delete(`http://localhost:5000/qualifications/${eid}`);
+      
+      // Update the UI to reflect the deletion
+      const updatedQualificationDetails = qualificationDetails.filter(
+        (qualification) => qualification.EID !== eid
+      );
+      setQualificationDetails(updatedQualificationDetails);
+
+      alert('Qualification details deleted successfully');
+    } catch (error) {
+      console.error('Error deleting qualification details:', error);
+      alert('Failed to delete qualification details');
+    }
+  };
+
   useEffect(() => {
     fetchQualificationDetails();
   }, []);
@@ -69,6 +87,10 @@ const ViewQualificationDetails = () => {
               {Object.keys(columns).map(
                 (col) => columns[col] && <td key={col}>{qualification[col] || 'N/A'}</td>
               )}
+              <td>
+                {/* Delete button for each row */}
+                <button onClick={() => handleDelete(qualification.EID)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
