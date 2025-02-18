@@ -77,7 +77,7 @@ const FamilyDetailsForm = () => {
 
         {/* Family Member Name Input */}
         <div className="form-group">
-          <label htmlFor="FNAME">Family Member Name:</label>
+          <label htmlFor="FNAME">Father Name:</label>
           <input
             type="text"
             id="FNAME"
@@ -90,7 +90,7 @@ const FamilyDetailsForm = () => {
 
         {/* Family Member DOB Input */}
         <div className="form-group">
-          <label htmlFor="F_DOB">Family Member DOB:</label>
+          <label htmlFor="F_DOB">Father DOB:</label>
           <input
             type="date"
             id="F_DOB"
