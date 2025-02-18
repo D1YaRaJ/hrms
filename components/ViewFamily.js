@@ -85,6 +85,19 @@ const ViewFamily = () => {
             alert('Failed to save changes. Please try again later.');
         }
     };
+    
+    const handleDelete = async (eid) => {
+        try {
+            await axios.delete(`http://localhost:5000/families/${eid}`);
+            const updatedDetails = familyDetails.filter((family) => family.EID !== eid);
+            setFamilyDetails(updatedDetails);
+            setFilteredDetails(updatedDetails);
+            alert('Family details deleted successfully');
+        } catch (error) {
+            console.error('Error deleting family details:', error.message);
+            alert('Failed to delete family details. Please try again later.');
+        }
+    };
 
     useEffect(() => {
         fetchFamilyDetails();
@@ -105,10 +118,9 @@ const ViewFamily = () => {
                     onChange={handleSearch}
                 />
             </div>
-
+            <h3>Select Columns to Display</h3>
             {/* Column Selection */}
             <div className="column-selection">
-                <h3>Select Columns to Display</h3>
                 {Object.keys(columns).map((col) => (
                     <label key={col}>
                         <input
@@ -140,6 +152,7 @@ const ViewFamily = () => {
                             ))}
                             <td>
                                 <button onClick={() => handleEditClick(family)}>Modify</button>
+                                <button onClick={() => handleDelete(family.EID)}>Delete</button>
                             </td>
                         </tr>
                     ))}
