@@ -13,7 +13,7 @@ const EmployeeManagement = () => {
     DESIGNATION: true,
     DOB: false,
     DATEOFJOINING: false,
-    FULLTIMEPARTTIME: false,
+    FTYPE: false,
     NATIONALITY: true,
     PHONE: true,
     EMAIL: true,
@@ -43,7 +43,7 @@ const EmployeeManagement = () => {
     DESIGNATION: "Designation",
     DOB: "Date of Birth",
     DATEOFJOINING: "Date of Joining",
-    FULLTIMEPARTTIME: "Full-Time/Part-Time",
+    FTYPE: "Employee Type",
     NATIONALITY: "Nationality",
     PHONE: "Phone",
     EMAIL: "Email",
@@ -74,6 +74,19 @@ const EmployeeManagement = () => {
     }
   };
 
+  const handleDelete = async (eid) => {
+    try {
+        const response = await axios.delete(`http://localhost:5000/employees/${eid}`);
+        if (response.status === 200) {
+            setEmployees(employees.filter((employee) => employee.EID !== eid));
+            alert('Employee and related records deleted successfully');
+        }
+    } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert('Failed to delete employee');
+    }
+};
+
   const handleColumnToggle = (column) => {
     setColumns({ ...columns, [column]: !columns[column] });
   };
@@ -82,9 +95,8 @@ const EmployeeManagement = () => {
     <div>
       <h1>Employee Management</h1>
       <button onClick={fetchEmployees}>View Employees</button>
-
+      <div><h3>Select Columns to Display</h3></div>
       <div className="column-selection">
-        <h3>Select Columns to Display</h3>
         {Object.keys(columns).map((col) => (
           <label key={col}>
             <input
@@ -113,6 +125,9 @@ const EmployeeManagement = () => {
                 (col) =>
                   columns[col] && <td key={col}>{employee[col] || 'N/A'}</td>
               )}
+              <td>
+                  <button onClick={() => handleDelete(employee.EID)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
