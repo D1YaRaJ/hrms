@@ -18,12 +18,15 @@ import QualificationForm from './components/QualificationForm';  // Import the Q
 import ViewQualificationDetails from './components/ViewQualificationDetails';
 import EmployeeDetailsForm from './components/EmployeeDetailsForm'; 
 import ViewEmployeeAccount from './components/ViewEmployeeAccount'; 
+import Login from './components/Login';
+import './Navbar.css';
+import Navbar from './Navbar'; 
 
 function Home() {
     return (
         <div>
             <h1>Welcome to the Employee Management System</h1>
-            <div class="button-container">
+            <div className="button-container">
                 <button>
                     <Link to="/add-employee">Add Employee</Link>
                 </button>
@@ -61,10 +64,10 @@ function Home() {
                     <Link to="/view-salary/1">View Salary Details</Link>
                 </button>
                 <button>
-                    <Link to="/view-family">Add Family Details</Link> {/* New button for family details */}
+                    <Link to="/view-family">View Family Details</Link> {/* New button for family details */}
                 </button>
                 <button>
-                    <Link to="/add-family">View Family Details</Link> {/* New button for adding family */}
+                    <Link to="/add-family">Add Family Details</Link> {/* New button for adding family */}
                 </button>
                 <button>
                     <Link to="/add-leave">Add Leave</Link> {/* New button for adding family */}
@@ -89,6 +92,7 @@ function App() {
     return (
         <Router>
             <div>
+            <Navbar />
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/add-employee" element={<AddEmployee />} />
@@ -109,6 +113,7 @@ function App() {
                     <Route path="/leave" element={<LeaveList />} /> {/* Route for viewing leave details */}
                     <Route path="/add-payroll" element={<AddPayroll />} /> {/* Route for adding payroll */}
                     <Route path="/view-payroll" element={<PayrollList />} /> {/* Route for viewing payroll */}
+                    <Route path="/login" element={<Login />} />
                 {/* Route for adding family */}
                 </Routes>
             </div>
