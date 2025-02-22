@@ -21,12 +21,44 @@ import ViewEmployeeAccount from './components/ViewEmployeeAccount';
 import Login from './components/Login';
 import './Navbar.css';
 import Navbar from './Navbar'; 
+import { Carousel } from 'react-bootstrap'; // Import Carousel from react-bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import './App.css'; // 
 
 function Home() {
     return (
         <div>
+            <div>
+            <Carousel>
+                <Carousel.Item interval={3000}>
+                    <img
+                        className="d-block w-100"
+                        src="https://www.sahyadri.edu.in/_next/image?url=%2Fimages%2Fbgs%2Fhero-bg.jpg&w=1920&q=75"
+                        alt="First slide"
+                    />
+                    <Carousel.Caption>
+                        <h3>Welcome to HR Management System</h3>
+                        <p>Streamline your HR processes with ease and efficiency</p>
+                    </Carousel.Caption>
+                </Carousel.Item>
+                <Carousel.Item interval={3000}>
+                    <img
+                        className="d-block w-100"
+                        src="https://theacademicinsights.com/wp-content/uploads/2020/02/Sahyadri-Campus.jpg"
+                        alt="Second slide"
+                    />
+                </Carousel.Item>
+                <Carousel.Item interval={3000}>
+                    <img
+                        className="d-block w-100"
+                        src="https://www.mangaloretoday.com/contentfiles/2022/oct/Sahyadri01oct2022-1.JPG"
+                        alt="Third slide"
+                    />
+                </Carousel.Item>
+            </Carousel>
+            </div>
             <h1>Welcome to the Employee Management System</h1>
-            <div className="button-container">
+            <div className="button-container"> {/* Add className */}
                 <button>
                     <Link to="/add-employee">Add Employee</Link>
                 </button>
@@ -64,10 +96,10 @@ function Home() {
                     <Link to="/view-salary/1">View Salary Details</Link>
                 </button>
                 <button>
-                    <Link to="/view-family">View Family Details</Link> {/* New button for family details */}
+                    <Link to="/add-family">Add Family Details</Link> {/* New button for family details */}
                 </button>
                 <button>
-                    <Link to="/add-family">Add Family Details</Link> {/* New button for adding family */}
+                    <Link to="/view-family">View Family Details</Link> {/* New button for adding family */}
                 </button>
                 <button>
                     <Link to="/add-leave">Add Leave</Link> {/* New button for adding family */}
@@ -114,7 +146,6 @@ function App() {
                     <Route path="/add-payroll" element={<AddPayroll />} /> {/* Route for adding payroll */}
                     <Route path="/view-payroll" element={<PayrollList />} /> {/* Route for viewing payroll */}
                     <Route path="/login" element={<Login />} />
-                {/* Route for adding family */}
                 </Routes>
             </div>
         </Router>
