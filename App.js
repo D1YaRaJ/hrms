@@ -51,7 +51,7 @@ function Home() {
                 <Carousel.Item interval={3000}>
                     <img
                         className="d-block w-100"
-                        src="https://www.mangaloretoday.com/contentfiles/2022/oct/Sahyadri01oct2022-1.JPG"
+                        src="https://www.sahyadri.edu.in/images/banners/home2.jpg"
                         alt="Third slide"
                     />
                 </Carousel.Item>
@@ -59,6 +59,31 @@ function Home() {
             </div>
             <h1>Welcome to the Employee Management System</h1>
             <div className="button-container"> {/* Add className */}
+                <button>
+                    <Link to="/employee">Employee</Link> {/* New button for Employee page */}
+                </button>
+                <button>
+                    <Link to="/department">Department</Link>
+                </button>
+                <button>
+                    <Link to="/attendance">Attendance</Link>
+                </button>
+                <button>
+                    <Link to="/leavepage">Leave</Link>
+                </button>
+                <button>
+                    <Link to="/salary">Salary</Link>
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function EmployeePage() {
+    return (
+        <div>
+            <h1>Employee Page</h1>
+            <div className="button-container">
                 <button>
                     <Link to="/add-employee">Add Employee</Link>
                 </button>
@@ -78,47 +103,86 @@ function Home() {
                     <Link to="/view-employee-account">View Employee Account</Link> {/* Button for ViewEmployeeAccount */}
                 </button>
                 <button>
+                    <Link to="/add-family">Add Family Details</Link> {/* New button for family details */}
+                </button>
+                <button>
+                    <Link to="/view-family">View Family Details</Link> {/* New button for adding family */}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function DepartmentPage() {
+    return (
+        <div>
+            <h1>Department Page</h1>
+            <div className='button-container'>
+                <button>
                     <Link to="/add-department">Add Department</Link>
                 </button>
                 <button>
                     <Link to="/view-departments">View Department Details</Link>
                 </button>
+            </div>
+        </div>
+    );
+}
+
+function AttendancePage() {
+    return (
+        <div>
+            <h1>Attendance Page</h1>
+            <div className='button-container'>
                 <button>
                     <Link to="/add-attendance">Add Attendance</Link>
                 </button>
                 <button>
                     <Link to="/view-attendance">View Attendance Records</Link>
                 </button>
+            </div>
+        </div>
+    );
+}
+
+function LeavePage() {
+    return (
+        <div>
+            <h1>Leave Page</h1>
+            <div className='button-container'>
+            <button>
+                    <Link to="/add-leave">Add Leave</Link> {/* New button for adding family */}
+                </button>
                 <button>
+                    <Link to="/leave">View Leave Details</Link> {/* New button for adding family */}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function SalaryPage() {
+    return (
+        <div>
+            <h1>Salary Page</h1>
+            <div className='button-container'>
+            <button>
                     <Link to="/add-salary">Add Salary Details</Link>
                 </button>
                 <button>
                     <Link to="/view-salary/1">View Salary Details</Link>
                 </button>
                 <button>
-                    <Link to="/add-family">Add Family Details</Link> {/* New button for family details */}
-                </button>
-                <button>
-                    <Link to="/view-family">View Family Details</Link> {/* New button for adding family */}
-                </button>
-                <button>
-                    <Link to="/add-leave">Add Leave</Link> {/* New button for adding family */}
-                </button>
-                <button>
-                    <Link to="/leave">View Leave Details</Link> {/* New button for adding family */}
-                </button>
-                
-                <button>
                     <Link to="/add-payroll">Add Payroll</Link> {/* Button to add payroll */}
                 </button>
                 <button>
                     <Link to="/view-payroll">View Payroll</Link> {/* Button to view payroll */}
                 </button>
-                
             </div>
         </div>
     );
 }
+
 
 function App() {
     return (
@@ -127,6 +191,11 @@ function App() {
             <Navbar />
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/employee" element={<EmployeePage />} /> {/* Add route for EmployeePage */}
+                    <Route path="/department" element={<DepartmentPage />} />
+                    <Route path="/attendance" element={<AttendancePage />} />
+                    <Route path="/salary" element={<SalaryPage />} />
+                    <Route path="/leavepage" element={<LeavePage />} />
                     <Route path="/add-employee" element={<AddEmployee />} />
                     <Route path="/view-employees" element={<EmployeeList />} />
                     <Route path="/add-qualification" element={<QualificationForm />} /> {/* Add route for QualificationForm */}
@@ -147,8 +216,17 @@ function App() {
                     <Route path="/view-payroll" element={<PayrollList />} /> {/* Route for viewing payroll */}
                     <Route path="/login" element={<Login />} />
                 </Routes>
+                <Footer/>
             </div>
         </Router>
+    );
+}
+
+function Footer() {
+    return (
+        <footer className="footer">
+            <p>&copy; {new Date().getFullYear()} Employee Management System. All Rights Reserved.</p>
+        </footer>
     );
 }
 
