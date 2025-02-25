@@ -4,6 +4,7 @@ import './addsalary.css';
 
 const Salary = () => {
   const [salaries, setSalaries] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [columns, setColumns] = useState({
     EID: true,
     BASIC_SAL: true,
@@ -11,7 +12,6 @@ const Salary = () => {
     ESI: true,
     LOAN: true,
     IT: true,
-    VIEW: true, // Added VIEW column toggle
   });
 
   const columnAliases = {
@@ -21,7 +21,6 @@ const Salary = () => {
     ESI: "ESI",
     LOAN: "Loan",
     IT: "Income Tax",
-    VIEW: "Actions", // Alias for the VIEW column
   };
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const Salary = () => {
 
   const fetchSalaries = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/salaries'); // API endpoint for all salaries
+      const response = await axios.get('http://localhost:5000/salaries');
       setSalaries(response.data);
     } catch (error) {
       console.error('Error fetching salaries:', error);
@@ -38,25 +37,11 @@ const Salary = () => {
     }
   };
 
-  const handleViewSalary = async (eid) => {
-    try {
-      const response = await axios.get(`http://localhost:5000/salaries/${eid}`);
-      alert(JSON.stringify(response.data[0], null, 2)); // Display details in an alert or customize as needed
-    } catch (error) {
-      console.error('Error fetching salary details for EID:', error);
-      alert('Failed to fetch details for the selected employee');
-    }
-  };
-
   const handleDelete = async (eid) => {
     try {
-      // Send DELETE request to backend to delete the salary entry
       await axios.delete(`http://localhost:5000/salaries/${eid}`);
-      
-      // After deletion, update the UI by filtering out the deleted salary
       const updatedSalaries = salaries.filter(salary => salary.EID !== eid);
       setSalaries(updatedSalaries);
-
       alert('Salary entry deleted successfully');
     } catch (error) {
       console.error('Error deleting salary entry:', error);
@@ -68,9 +53,22 @@ const Salary = () => {
     setColumns({ ...columns, [column]: !columns[column] });
   };
 
+  const filteredSalaries = salaries.filter(salary =>
+    String(salary.EID).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+
   return (
     <div className="salary-management">
       <h1>Salary Management</h1>
+      
+      <input
+        type="text"
+        placeholder="Search by Employee ID..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ marginBottom: '10px', padding: '5px', width: '250px' }}
+      />
 
       <div className="column-selection">
         <h3>Select Columns to Display</h3>
@@ -90,34 +88,20 @@ const Salary = () => {
         <thead>
           <tr>
             {Object.keys(columns).map(
-              (col) =>
-                columns[col] && <th key={col}>{columnAliases[col]}</th>
+              (col) => columns[col] && <th key={col}>{columnAliases[col]}</th>
             )}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {salaries.map((salary) => (
+          {filteredSalaries.map((salary) => (
             <tr key={salary.EID}>
-              {Object.keys(columns).map((col) => {
-                if (!columns[col]) return null;
-
-                if (col === "VIEW") {
-                  return (
-                    <td key={col}>
-                      <button
-                        onClick={() => handleViewSalary(salary.EID)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        View
-                      </button>
-                      <button onClick={() => handleDelete(salary.EID)}>Delete</button>
-                    </td>
-                    
-                  );
-                }
-
-                return <td key={col}>{salary[col] || 'N/A'}</td>;
-              })}
+              {Object.keys(columns).map((col) =>
+                columns[col] ? <td key={col}>{salary[col] || 'N/A'}</td> : null
+              )}
+              <td>
+                <button onClick={() => handleDelete(salary.EID)}>Delete</button>
+              </td>
             </tr>
           ))}
         </tbody>
