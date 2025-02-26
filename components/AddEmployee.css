@@ -68,3 +68,32 @@ h1 {
     text-align: center;
     margin-bottom: 20px;
 }
+
+
+  /* Input and dropdown styling */
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  /* Dropdown specific styling */
+  .form-group select {
+    appearance: none;
+    background-color: white;
+    cursor: pointer;
+    padding-right: 30px;
+    position: relative;
+  }
+  
+  /* Dropdown hover and focus effect */
+  .form-group select:hover,
+  .form-group select:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+
+  
