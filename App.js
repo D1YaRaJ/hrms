@@ -75,6 +75,7 @@ function Home() {
                     <Link to="/salary">Salary</Link>
                 </button>
             </div>
+            <PageFooter/>
         </div>
     );
 }
@@ -109,6 +110,7 @@ function EmployeePage() {
                     <Link to="/view-family">View Family Details</Link> {/* New button for adding family */}
                 </button>
             </div>
+            <FixedFooter/>
         </div>
     );
 }
@@ -125,6 +127,7 @@ function DepartmentPage() {
                     <Link to="/view-departments">View Department Details</Link>
                 </button>
             </div>
+            <FixedFooter/>
         </div>
     );
 }
@@ -141,6 +144,7 @@ function AttendancePage() {
                     <Link to="/view-attendance">View Attendance Records</Link>
                 </button>
             </div>
+            <FixedFooter/>
         </div>
     );
 }
@@ -157,6 +161,7 @@ function LeavePage() {
                     <Link to="/leave">View Leave Details</Link> {/* New button for adding family */}
                 </button>
             </div>
+            <FixedFooter/>
         </div>
     );
 }
@@ -179,6 +184,7 @@ function SalaryPage() {
                     <Link to="/view-payroll">View Payroll</Link> {/* Button to view payroll */}
                 </button>
             </div>
+            <FixedFooter/>
         </div>
     );
 }
@@ -216,18 +222,26 @@ function App() {
                     <Route path="/view-payroll" element={<PayrollList />} /> {/* Route for viewing payroll */}
                     <Route path="/login" element={<Login />} />
                 </Routes>
-                <Footer/>
             </div>
         </Router>
     );
 }
 
-function Footer() {
+function FixedFooter() {
     return (
-        <footer className="footer">
-            <p>&copy; {new Date().getFullYear()} Employee Management System. All Rights Reserved.</p>
+        <footer className="fixed-footer">
+            <p>&copy; {new Date().getFullYear()} HR Management System. All Rights Reserved.</p>
         </footer>
     );
 }
+
+function PageFooter() {
+    return (
+        <footer className="page-footer">
+            <p>&copy; {new Date().getFullYear()} HR Management System. All Rights Reserved.</p>
+        </footer>
+    );
+}
+
 
 export default App;
