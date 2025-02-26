@@ -188,6 +188,65 @@ app.get('/qualifications', (req, res) => {
         }
     });
 });
+
+app.get('/qualifications/:eid', (req, res) => {
+    const { eid } = req.params;
+    db.query('CALL FilterQualificationByEID(?)', [eid], (err, results) => {
+        if (err) {
+            console.error('Error executing procedure:', err);
+            return res.status(500).send('Error fetching family details');
+        }
+        if (results.length > 0 && results[0].length > 0) {
+            res.json(results[0]); 
+        } else {
+            res.status(404).send('No qualification details found for the given EID');
+        }
+    });
+});
+
+app.put("/qualifications", async (req, res) => {
+    const {
+      oldEID,
+      oldINSTITUTION,
+      oldPERCENTAGE,
+      oldSPECIALIZATION,
+      oldYOG,
+      newINSTITUTION,
+      newPERCENTAGE,
+      newSPECIALIZATION,
+      newYOG
+    } = req.body;
+  
+    try {
+      const updateSQL = `
+        UPDATE QUALIFICATION
+        SET INSTITUTION = ?, PERCENTAGE = ?, SPECIALIZATION = ?, YOG = ?
+        WHERE EID = ? AND INSTITUTION = ? AND PERCENTAGE = ? AND SPECIALIZATION = ? AND YOG = ?;
+      `;
+  
+      const [result] = await db.promise().query(updateSQL, [
+        newINSTITUTION,
+        newPERCENTAGE,
+        newSPECIALIZATION,
+        newYOG,
+        oldEID,
+        oldINSTITUTION,
+        oldPERCENTAGE,
+        oldSPECIALIZATION,
+        oldYOG
+      ]);
+  
+      if (result.affectedRows > 0) {
+        res.json({ message: "Qualification details updated successfully" });
+      } else {
+        res.status(404).json({ error: "Record not found" });
+      }
+    } catch (error) {
+      console.error("Error updating qualification details:", error);
+      res.status(500).json({ error: "Failed to update qualification details" });
+    }
+  });
+
 //API to delete qualifications
 app.delete('/qualifications/:eid', (req, res) => {
     const { eid } = req.params;
@@ -227,6 +286,41 @@ app.get('/employee-accounts', (req, res) => {
         }
     });
 });
+
+app.get('/employee-accounts/:eid', (req, res) => {
+    const { eid } = req.params;
+    const sql = 'SELECT * FROM EMPLOYEEDETAILS WHERE EID = ?';
+    db.query(sql, [eid], (err, results) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send('Error fetching employee account details');
+        } else {
+            res.json(results);
+        }
+    });
+});
+
+app.put('/employee-accounts/:eid', (req, res) => {
+    const { eid } = req.params;
+    const { BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN } = req.body;
+    const query = `
+        UPDATE EMPLOYEEDETAILS
+        SET BIOMETRIC_CARD_NO = ?, AADHAR = ?, BANK_ACC = ?, PAN = ?
+        WHERE EID = ?
+    `;
+    db.query(query, [BIOMETRIC_CARD_NO, AADHAR, BANK_ACC, PAN, eid], (err, results) => {
+        if (err) {
+            console.error('Error updating employee account details:', err);
+            return res.status(500).send('Failed to update employee account details');
+        }
+        if (results.affectedRows > 0) {
+            res.send('Employee account details updated successfully');
+        } else {
+            res.status(404).send('No employee account details found for the given EID');
+        }
+    });
+});
+
 //API to delete employee account details
 app.delete('/employee-accounts/:eid', (req, res) => {
     const { eid } = req.params; 
