@@ -11,25 +11,22 @@ table {
 }
 
 /* Table headers */
-th {
+table th {
     padding: 12px;
-    background-color: #4CAF50;
-    color: white;
+    background-color: #cbdacc; /* Green background by default */
+    color: rgb(102, 12, 12);
     text-align: left;
-}
-
-th:hover {
-    background-color: #45a049;
+    border: 1px solid #ad6565; /* Optional: Adds a border for better clarity */
 }
 
 /* Table cells */
-td {
+table td {
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #f8d9d9;
     text-align: left;
 }
 
-td:nth-child(even) {
+table td:nth-child(even) {
     background-color: #f2f2f2;
 }
 
@@ -53,7 +50,7 @@ input[type="checkbox"] {
 .column-selection {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px; /* Optional: adds spacing between checkboxes */
+    gap: 10px; /* Adds spacing between checkboxes */
     margin-bottom: 20px;
 }
 
@@ -76,3 +73,124 @@ button:hover {
 button:focus {
     outline: none;
 }
+
+/* Modal styles */
+/* Style for the modal (popup) */
+/* Style for the modal (popup) */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    z-index: 1000;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh; /* Maximum height of the popup */
+    overflow-y: auto; /* Enable vertical scrolling if content overflows */
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  
+  
+  .close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    padding: 10px;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+
+  .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .popup {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    position: absolute; /* This is necessary for dragging */
+  }
+  
+  .popup input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .popup button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+  
+  .popup button[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+  }
+  
+  .popup button[type="button"] {
+    background-color: #f44336;
+    color: white;
+    border: none;
+  }
+  
+  .edit-form-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .edit-form-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  
