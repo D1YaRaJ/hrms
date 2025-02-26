@@ -188,8 +188,8 @@ const EmployeeManagement = () => {
                 columns[col] && <td key={col}>{employee[col] || "N/A"}</td>
               )}
               <td>
-                <FaEdit className="icon edit-icon" onClick={() => handleModifyClick(employee)} />
-                <FaTrash className="icon delete-icon" onClick={() => handleDelete(employee.EID)} />
+                <FaEdit className="icon-button-edit" onClick={() => handleModifyClick(employee)} />
+                <FaTrash className="icon-button-dlt" onClick={() => handleDelete(employee.EID)} />
               </td>
             </tr>
           ))}
