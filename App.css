@@ -11,7 +11,7 @@
   font-family: 'Arial', sans-serif;
   background-color: #f4f7fc;
   color: #333;
-  padding: 20px;
+  padding: 0px;
 } */
 
 h1 {
@@ -42,7 +42,7 @@ button {
 }
 
 button:hover {
-  background-color: purple;
+  background-color: rgb(5, 201, 5);
 }
 
 button:focus {
@@ -60,15 +60,25 @@ button a {
 button a:hover {
   text-decoration: none;
 }
-.footer {
+.fixed-footer {
   background-color: #343a40;
   color: white;
   text-align: center;
-  padding: 15px 0;
-  position: relative;
+  padding: 15px;
+  position:fixed ;
   bottom: 0;
   width: 100%;
   margin-top: 20px;
+}
+
+.page-footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    bottom: 0;
+    width: 100%;
+    margin-top: 20px;
 }
 
 .footer p {
