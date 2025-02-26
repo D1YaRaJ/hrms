@@ -159,6 +159,7 @@ app.get('/departments/search', (req, res) => {
         res.json(results);
     });
 });
+
 //API to Update department details
 app.put('/departments/:did', (req, res) => {
     const { did } = req.params;
@@ -531,21 +532,66 @@ app.get('/leave', (req, res) => {
       else { res.json(results);}
     });
 });
-// API to add a new leave entry
-  app.post('/add-leave', (req, res) => {
-    console.log(req.body); 
+// API to add a new leave entry   
+app.post("/add-leave", (req, res) => {
     const { EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } = req.body;
-    const values = [EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE];
+
+    // Match column names with your actual database table
     const sql = 'INSERT INTO LEAVES (EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE) VALUES (?, ?, ?, ?, ?, ?)';
-    console.log("SQL Query:", sql); 
-    console.log("Values:", values);
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error(err); 
-        return res.status(500).send(err);}
-      res.json({ message: 'Leave added successfully', id: result.insertId });
+
+    db.query(sql, [EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE], (err, result) => {
+        if (err) {
+            console.error("Failed to add leave:", err);
+            return res.status(500).json({ message: "Error adding leave", error: err });
+        }
+        res.status(200).json({ message: "Leave added successfully", result });
     });
 });
+app.put('/leave/:eid', (req, res) => {
+    const { leave_id } = req.params;
+
+    // Convert dates from dd-mm-yyyy to yyyy-mm-dd
+    const formattedData = {
+        ...req.body,
+        FROM_DATE_DATE: convertToMySQLDate(req.body.FROM_DATE),
+        TO_DATE: convertToMySQLDate(req.body.TO_DATE),
+    };
+
+    const sql = 'UPDATE LEAVE SET ? WHERE LEAVE_ID = ?';
+    db.query(sql, [formattedData, leave_id], (err, result) => {
+        if (err) {
+            console.error('Error updating leave:', err);
+            return res.status(500).send({ message: 'Failed to update leave', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Leave record not found' });
+        }
+        res.json({ message: 'Leave updated successfully' });
+    });
+});
+app.put('/leave/:eid', (req, res) => {
+    const { leave_id } = req.params;
+
+    // Convert dates from dd-mm-yyyy to yyyy-mm-dd
+    const formattedData = {
+        ...req.body,
+        START_DATE: convertToMySQLDate(req.body.START_DATE),
+        END_DATE: convertToMySQLDate(req.body.END_DATE),
+    };
+
+    const sql = 'UPDATE LEAVE SET ? WHERE LEAVE_ID = ?';
+    db.query(sql, [formattedData, leave_id], (err, result) => {
+        if (err) {
+            console.error('Error updating leave:', err);
+            return res.status(500).send({ message: 'Failed to update leave', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Leave record not found' });
+        }
+        res.json({ message: 'Leave updated successfully' });
+    });
+});
+
 //API to delete a leave entry
 app.delete('/leave/:eid', (req, res) => {
     const { eid } = req.params;
