@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./EmployeeList.css";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCog, FaTimes } from "react-icons/fa";
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -36,6 +36,7 @@ const EmployeeManagement = () => {
   });
   const [editRow, setEditRow] = useState(null);
   const [editData, setEditData] = useState({});
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
 
   const columnAliases = {
     EID: "Employee ID",
@@ -166,6 +167,10 @@ const EmployeeManagement = () => {
     }
   };
 
+  const toggleColumn = (column) => {
+    setColumns({ ...columns, [column]: !columns[column] });
+  };
+
   useEffect(() => {
     fetchEmployees();
   }, []);
@@ -174,6 +179,29 @@ const EmployeeManagement = () => {
     <div>
       <h1>Employee Management</h1>
       <button onClick={fetchEmployees}>View Employees</button>
+      <button onClick={() => setShowColumnSelector(!showColumnSelector)}>
+        <FaCog /> Column Settings
+      </button>
+      {showColumnSelector && (
+        <div className="column-selector">
+          <div className="column-selector-header">
+            <h3>Select Columns to Display</h3>
+            <button className="close-button" onClick={() => setShowColumnSelector(false)}>
+              <FaTimes />
+            </button>
+          </div>
+          {Object.keys(columns).map((col) => (
+            <label key={col}>
+              <input
+                type="checkbox"
+                checked={columns[col]}
+                onChange={() => toggleColumn(col)}
+              />
+              {columnAliases[col]}
+            </label>
+          ))}
+        </div>
+      )}
       <table border="1" style={{ marginTop: "20px", width: "100%" }}>
         <thead>
           <tr>
