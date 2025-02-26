@@ -248,4 +248,37 @@ button:focus {
     gap: 10px;
   }
   
+  .column-selector {
+    position: absolute;
+    top: 100px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
   
+  .column-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .close-button:hover {
+    color: #000;
+  }
+  
+  .column-selector label {
+    display: block;
+    margin: 5px 0;
+  }
