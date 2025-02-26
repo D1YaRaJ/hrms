@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./EmployeeList.css";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
@@ -187,8 +188,8 @@ const EmployeeManagement = () => {
                 columns[col] && <td key={col}>{employee[col] || "N/A"}</td>
               )}
               <td>
-                <button onClick={() => handleModifyClick(employee)}>Modify</button>
-                <button onClick={() => handleDelete(employee.EID)}>Delete</button>
+                <FaEdit className="icon edit-icon" onClick={() => handleModifyClick(employee)} />
+                <FaTrash className="icon delete-icon" onClick={() => handleDelete(employee.EID)} />
               </td>
             </tr>
           ))}
