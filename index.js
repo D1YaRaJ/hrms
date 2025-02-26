@@ -11,27 +11,54 @@ app.use(cors({
   }));
 app.use(bodyParser.json());
 
+const convertToMySQLDate = (dateString) => {
+  if (!dateString) return null;
+  const [day, month, year] = dateString.split('-');
+  return `${year}-${month}-${day}`;
+};
+
 // API endpoint to get all employees
 app.get('/employees', (req, res) => {
     const sql = 'SELECT * FROM EMPLOYEE';
     db.query(sql, (err, results) => {
-        if (err) {res.status(500).send(err);} 
-        else {res.json(results);}
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            // Convert dates to yyyy-mm-dd format before sending to the frontend
+            const formattedResults = results.map(employee => ({
+                ...employee,
+                DOB: employee.DOB.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                DATE_OF_JOIN: employee.DATE_OF_JOIN.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                PPROFEXP_FROM: employee.PPROFEXP_FROM.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                PPROFEXP_TO: employee.PPROFEXP_TO.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+            }));
+            res.json(formattedResults);
+        }
     });
 });
 // API endpoint to add a new employee
 app.post('/add-employee', (req, res) => {
     console.log(req.body); // Log the received data
-    const data = req.body;
+
+    // Convert dates from dd-mm-yyyy to yyyy-mm-dd
+    const formattedData = {
+        ...req.body,
+        DOB: convertToMySQLDate(req.body.DOB),
+        DATE_OF_JOIN: convertToMySQLDate(req.body.DATE_OF_JOIN),
+        PPROFEXP_FROM: convertToMySQLDate(req.body.PPROFEXP_FROM),
+        PPROFEXP_TO: convertToMySQLDate(req.body.PPROFEXP_TO),
+    };
+
     const sql = 'INSERT INTO EMPLOYEE SET ?';
-    db.query(sql, data, (err, result) => {
-      if (err) {
-        console.error(err); // Log SQL error
-        return res.status(500).send(err);
-      }
-      res.json({ message: 'Employee added successfully', id: result.insertId });
+    db.query(sql, formattedData, (err, result) => {
+        if (err) {
+            console.error(err); // Log SQL error
+            return res.status(500).send(err);
+        }
+        res.json({ message: 'Employee added successfully', id: result.insertId });
     });
 });
+
 // API endpoint to delete an employee
 app.delete('/employees/:eid', (req, res) => {
     const { eid } = req.params;
@@ -44,6 +71,33 @@ app.delete('/employees/:eid', (req, res) => {
         res.status(200).json({ message: 'Employee and related records deleted successfully' });
     });
 });
+
+// API endpoint to update an employee
+app.put('/employees/:eid', (req, res) => {
+    const { eid } = req.params;
+
+    // Convert dates from dd-mm-yyyy to yyyy-mm-dd
+    const formattedData = {
+        ...req.body,
+        DOB: convertToMySQLDate(req.body.DOB),
+        DATE_OF_JOIN: convertToMySQLDate(req.body.DATE_OF_JOIN),
+        PPROFEXP_FROM: convertToMySQLDate(req.body.PPROFEXP_FROM),
+        PPROFEXP_TO: convertToMySQLDate(req.body.PPROFEXP_TO),
+    };
+
+    const sql = 'UPDATE EMPLOYEE SET ? WHERE EID = ?';
+    db.query(sql, [formattedData, eid], (err, result) => {
+        if (err) {
+            console.error('Error updating employee:', err);
+            return res.status(500).send({ message: 'Failed to update employee', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Employee not found' });
+        }
+        res.json({ message: 'Employee updated successfully' });
+    });
+});
+
 
 //API to display all department
 app.get('/departments', (req, res) => {
