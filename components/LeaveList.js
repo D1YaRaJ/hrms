@@ -1,78 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import './LeaveList.css';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa"; // Icons
+import "./LeaveList.css";
 
 const LeaveList = () => {
-    const [leaves, setLeaves] = useState([]);
-    const [filteredLeaves, setFilteredLeaves] = useState([]);
-    const [columns, setColumns] = useState({
-        EID: true,
-        LTYPE: true,
-        APPROVAL: true,
-        NO_OF_DAYS: true,
-        FROM_DATE: true,
-        TO_DATE: true
-    });
-    const [searchEID, setSearchEID] = useState('');
+    
+    const [editIndex, setEditIndex] = useState(null);
+    const [editData, setEditData] = useState({});
+ const [leaves, setLeaves] = useState([]);
+const [fullLeaves, setFullLeaves] = useState([]); // Store full data separately
+const [searchEID, setSearchEID] = useState("");
 
-    const columnAliases = {
-        EID: "Employee ID",
-        LTYPE: "Leave Type",
-        APPROVAL: "Approval Status",
-        NO_OF_DAYS: "No. of Days",
-        FROM_DATE: "From",
-        TO_DATE: "To"
-    };
+const fetchLeaves = async () => {
+    try {
+        const response = await axios.get("http://localhost:5000/leave");
+        setLeaves(response.data);
+        setFullLeaves(response.data); // Keep full copy of data
+    } catch (error) {
+        console.error("Error fetching leave data:", error);
+        alert("Failed to fetch leave details");
+    }
+};
 
-    // Fetch all leave records
-    const fetchLeaves = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/leave');
-            setLeaves(response.data);
-            setFilteredLeaves(response.data); // Initially show all records
-        } catch (error) {
-            console.error('Error fetching leave data:', error);
-            alert('Failed to fetch leave details');
-        }
-    };
+const handleSearch = () => {
+    if (!searchEID.trim()) {
+        setLeaves(fullLeaves); // Reset to full list when search is empty
+        return;
+    }
 
-    // Handle column selection
-    const handleColumnToggle = (column) => {
-        setColumns({ ...columns, [column]: !columns[column] });
-    };
+    const filtered = fullLeaves.filter((leave) =>
+        leave.EID.toString().includes(searchEID.trim()) // Partial match search
+    );
 
-    // Search leave records by Employee ID
-    const handleSearch = () => {
-        if (!searchEID.trim()) {
-            alert('Please enter an Employee ID to search');
-            return;
-        }
+    setLeaves(filtered);
 
-        const filtered = leaves.filter(leave => leave.EID === searchEID);
-        setFilteredLeaves(filtered);
+    if (filtered.length === 0) {
+        alert(`No leave records found for Employee ID: ${searchEID}`);
+    }
+};
 
-        if (filtered.length === 0) {
-            alert(`No leave records found for Employee ID: ${searchEID}`);
-        }
-    };
+useEffect(() => {
+    fetchLeaves();
+}, []);
 
-    // Delete all leave records for entered Employee ID
-    const handleDelete = async () => {
-        if (!searchEID.trim()) {
-            alert('Please enter an Employee ID before deleting leave records');
-            return;
-        }
+
+    const handleDelete = async (eid, from_date) => {
+        if (!window.confirm(`Are you sure you want to delete this leave record?`)) return;
 
         try {
-            await axios.delete(`http://localhost:5000/leave/${searchEID}`);
-            const updatedLeaves = leaves.filter(leave => leave.EID !== searchEID);
+            await axios.delete(`http://localhost:5000/leave/${eid}/${from_date}`);
+            const updatedLeaves = leaves.filter((leave) => !(leave.EID === eid && leave.FROM_DATE === from_date));
             setLeaves(updatedLeaves);
-            setFilteredLeaves(updatedLeaves);
-            alert(`Leave records for Employee ID ${searchEID} deleted successfully`);
-            setSearchEID(''); // Reset search box after deletion
+            alert(`Leave record deleted successfully`);
         } catch (error) {
-            console.error('Error deleting leave record:', error);
-            alert('Failed to delete leave record');
+            console.error("Error deleting leave record:", error);
+            alert("Failed to delete leave record");
+        }
+    };
+
+    const handleEdit = (index) => {
+        setEditIndex(index);
+        setEditData({ ...leaves[index] });
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditData({ ...editData, [name]: value });
+    };
+
+    const handleUpdate = async () => {
+        if (!editData) return;
+
+        const { EID, FROM_DATE, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } = editData;
+
+        try {
+            await axios.put(`http://localhost:5000/leave/${EID}/${FROM_DATE}`, {
+                LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE
+            });
+
+            const updatedLeaves = leaves.map((leave, index) =>
+                index === editIndex ? { ...leave, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } : leave
+            );
+
+            setLeaves(updatedLeaves);
+            setEditIndex(null);
+            alert("Leave record updated successfully");
+        } catch (error) {
+            console.error("Error updating leave record:", error);
+            alert("Failed to update leave record");
         }
     };
 
@@ -84,59 +99,96 @@ const LeaveList = () => {
         <div>
             <h2>Leave List</h2>
 
-            {/* Search Box for Employee ID */}
-            <label>Enter Employee ID: </label>
+            {/* Search Box */}
             <input
                 type="text"
                 value={searchEID}
                 onChange={(e) => setSearchEID(e.target.value)}
                 placeholder="Enter Employee ID"
             />
-
-            {/* Search and Delete Buttons */}
-            <button onClick={handleSearch} style={{ marginLeft: '10px' }}>Search</button>
-            <button onClick={handleDelete} disabled={!searchEID.trim()} style={{ marginLeft: '10px' }}>
-                Delete
-            </button>
-
-            {/* Column Selection */}
-            <div className="column-selection">
-                <h3>Select Columns to Display</h3>
-                {Object.keys(columns).map((col) => (
-                    <label key={col}>
-                        <input
-                            type="checkbox"
-                            checked={columns[col]}
-                            onChange={() => handleColumnToggle(col)}
-                        />
-                        {columnAliases[col] || col} {/* Display alias name */}
-                    </label>
-                ))}
-            </div>
+            <button onClick={handleSearch} style={{ marginLeft: "10px" }}>Search</button>
 
             {/* Leave Records Table */}
-            <table border="1" style={{ marginTop: '20px', width: '100%' }}>
+            <table border="1" style={{ marginTop: "20px", width: "100%" }}>
                 <thead>
                     <tr>
-                        {Object.keys(columns).map(
-                            (col) => columns[col] && <th key={col}>{columnAliases[col]}</th>
-                        )}
+                        <th>Employee ID</th>
+                        <th>Leave Type</th>
+                        <th>Approval</th>
+                        <th>No. of Days</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredLeaves.length > 0 ? (
-                        filteredLeaves.map((leave) => (
-                            <tr key={leave.EID}>
-                                {Object.keys(columns).map(
-                                    (col) => columns[col] && <td key={col}>{leave[col] || 'N/A'}</td>
-                                )}
+                    {leaves.length > 0 ? (
+                        leaves.map((leave, index) => (
+                            <tr key={`${leave.EID}-${leave.FROM_DATE}`}>
+                                <td>{leave.EID}</td>
+                                <td>
+                                    {editIndex === index ? (
+                                        <input type="text" name="LTYPE" value={editData.LTYPE} onChange={handleEditChange} />
+                                    ) : (
+                                        leave.LTYPE
+                                    )}
+                                </td>
+                                <td>
+                                    {editIndex === index ? (
+                                        <input type="text" name="APPROVAL" value={editData.APPROVAL} onChange={handleEditChange} />
+                                    ) : (
+                                        leave.APPROVAL
+                                    )}
+                                </td>
+                                <td>
+                                    {editIndex === index ? (
+                                        <input type="number" name="NO_OF_DAYS" value={editData.NO_OF_DAYS} onChange={handleEditChange} />
+                                    ) : (
+                                        leave.NO_OF_DAYS
+                                    )}
+                                </td>
+                                <td>{leave.FROM_DATE}</td>
+                                <td>
+                                    {editIndex === index ? (
+                                        <input type="date" name="TO_DATE" value={editData.TO_DATE} onChange={handleEditChange} />
+                                    ) : (
+                                        leave.TO_DATE
+                                    )}
+                                </td>
+                                <td>
+                                    {editIndex === index ? (
+                                        <>
+                                            <FaSave
+                                                style={{ cursor: "pointer", color: "green", marginRight: "10px" }}
+                                                title="Save"
+                                                onClick={handleUpdate}
+                                            />
+                                            <FaTimes
+                                                style={{ cursor: "pointer", color: "red" }}
+                                                title="Cancel"
+                                                onClick={() => setEditIndex(null)}
+                                            />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaEdit
+                                                style={{ cursor: "pointer", color: "blue", marginRight: "10px" }}
+                                                title="Edit Leave"
+                                                onClick={() => handleEdit(index)}
+                                            />
+                                            <FaTrash
+                                                style={{ cursor: "pointer", color: "red" }}
+                                                title="Delete Leave"
+                                                onClick={() => handleDelete(leave.EID, leave.FROM_DATE)}
+                                            />
+                                        </>
+                                    )}
+                                </td>
                             </tr>
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={Object.keys(columns).length} style={{ textAlign: 'center' }}>
-                                No leave records found
-                            </td>
+                            <td colSpan="7" style={{ textAlign: "center" }}>No leave records found</td>
                         </tr>
                     )}
                 </tbody>
