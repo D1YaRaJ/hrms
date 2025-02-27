@@ -1,36 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 function AddAttendance() {
+    const today = new Date().toISOString().split("T")[0]; // Get today's date
     const [attendance, setAttendance] = useState({
-        EID: '',
-        A_DATE: new Date().toISOString().split('T')[0], // Auto-set today's date
-        STATUS: '',
-        LOGIN: '',
-        LOGOUT: '',
+        EID: "",
+        A_DATE: "", // Now empty by default
+        STATUS: "",
+        LOGIN: "",
+        LOGOUT: "",
     });
 
     const [employeeList, setEmployeeList] = useState([]);
-    const [error, setError] = useState('');
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        // Fetch employee list from backend
-        axios.get('http://localhost:5000/employees')
-            .then(response => setEmployeeList(response.data))
-            .catch(error => console.error('Error fetching employee list:', error));
+        axios.get("http://localhost:5000/employees")
+            .then((response) => setEmployeeList(response.data))
+            .catch((error) => console.error("Error fetching employee list:", error));
     }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // If updating EID, validate the input
-        if (name === 'EID') {
+        if (name === "EID") {
             if (!/^[a-zA-Z0-9]+$/.test(value)) {
-                setError('EID should only contain letters and numbers.');
+                setError("EID should only contain letters and numbers.");
             } else if (/^\d+$/.test(value) && parseInt(value) <= 0) {
-                setError('EID should be a positive number or alphanumeric.');
+                setError("EID should be a positive number or alphanumeric.");
             } else {
-                setError('');
+                setError("");
+            }
+        }
+
+        if (name === "A_DATE") {
+            if (value > today) {
+                setError("Date cannot be in the future.");
+                return;
+            } else {
+                setError("");
             }
         }
 
@@ -39,20 +47,18 @@ function AddAttendance() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Prevent form submission if EID has an error
         if (error) {
             alert(error);
             return;
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/add-attendance', attendance);
+            const response = await axios.post("http://localhost:5000/add-attendance", attendance);
             alert(response.data.message);
-            setAttendance({ EID: '', A_DATE: new Date().toISOString().split('T')[0], STATUS: '', LOGIN: '', LOGOUT: '' });
+            setAttendance({ EID: "", A_DATE: "", STATUS: "", LOGIN: "", LOGOUT: "" });
         } catch (error) {
-            console.error('Error adding attendance:', error);
-            alert('Failed to add attendance record');
+            console.error("Error adding attendance:", error);
+            alert("Failed to add attendance record");
         }
     };
 
@@ -67,21 +73,32 @@ function AddAttendance() {
                         name="EID"
                         value={attendance.EID}
                         onChange={handleChange}
-                        placeholder="Enter or select Employee ID"
+                        placeholder="Enter Employee ID"
                         list="employeeList"
                         required
                     />
                     <datalist id="employeeList">
-                        {employeeList.map(emp => (
-                            <option key={emp.EID} value={emp.EID}>{emp.EID} - {emp.Name}</option>
+                        {employeeList.map((emp) => (
+                            <option key={emp.EID} value={emp.EID}>
+                                {emp.EID} - {emp.Name}
+                            </option>
                         ))}
                     </datalist>
-                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                    {error && <p style={{ color: "red" }}>{error}</p>}
                 </div>
+
                 <div>
                     <label>Date:</label>
-                    <input type="date" name="A_DATE" value={attendance.A_DATE} onChange={handleChange} required />
+                    <input
+                        type="date"
+                        name="A_DATE"
+                        value={attendance.A_DATE}
+                        onChange={handleChange}
+                        max={today} // Allows past dates but prevents future dates
+                        required
+                    />
                 </div>
+
                 <div>
                     <label>Status:</label>
                     <select name="STATUS" value={attendance.STATUS} onChange={handleChange} required>
@@ -91,14 +108,17 @@ function AddAttendance() {
                         <option value="Leave">Leave</option>
                     </select>
                 </div>
+
                 <div>
                     <label>Login Time:</label>
                     <input type="time" name="LOGIN" value={attendance.LOGIN} onChange={handleChange} />
                 </div>
+
                 <div>
                     <label>Logout Time:</label>
                     <input type="time" name="LOGOUT" value={attendance.LOGOUT} onChange={handleChange} />
                 </div>
+
                 <button type="submit">Add Attendance</button>
             </form>
         </div>
