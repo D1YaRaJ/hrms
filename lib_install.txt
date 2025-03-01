@@ -6,3 +6,5 @@ npm i react-router-dom
 npm i react-bootstrap
 npm i bootstrap
 npm i react-icons    (in frontend)
+npm install moment
+
