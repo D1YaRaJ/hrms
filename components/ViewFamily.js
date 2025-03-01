@@ -25,11 +25,34 @@ const ViewFamily = () => {
         M_DOB: "Mother's DOB",
     };
 
+    const minDOB = new Date();
+  minDOB.setFullYear(minDOB.getFullYear() - 100); // Minimum DOB: 100 years ago
+  const maxDOB = new Date();
+  maxDOB.setFullYear(maxDOB.getFullYear() - 35); 
+
+    const formatDateForDisplay = (dateString) => {
+        if (!dateString) return "N/A";
+        const [year, month, day] = dateString.split("-");
+        return `${day}-${month}-${year}`;
+      };
+    
+      // Convert input date (DD-MM-YYYY) to MySQL format (YYYY-MM-DD)
+      const formatDateForDB = (dateString) => {
+        if (!dateString) return "";
+        const [day, month, year] = dateString.split("-");
+        return `${year}-${month}-${day}`;
+      };
+
     const fetchFamilyDetails = async () => {
         try {
             const response = await axios.get('http://localhost:5000/families');
-            setFamilyDetails(response.data);
-            setFilteredDetails(response.data);
+            const formattedData = response.data.map((familyDetails) => ({
+                ...familyDetails,
+                F_DOB: formatDateForDisplay(familyDetails.F_DOB),
+                M_DOB: formatDateForDisplay(familyDetails.M_DOB)
+              }));
+              setFamilyDetails(formattedData);
+            setFilteredDetails(formattedData);
         } catch (error) {
             console.error('Error fetching family details:', error.message);
             alert('Failed to fetch family details. Please try again later.');
@@ -59,8 +82,8 @@ const ViewFamily = () => {
     const handleEditClick = (row) => {
         setEditRow(row);
         const rowData = { ...row };
-        if (row.F_DOB) rowData.F_DOB = row.F_DOB.split('T')[0];
-        if (row.M_DOB) rowData.M_DOB = row.M_DOB.split('T')[0];
+        if (row.F_DOB) rowData.F_DOB = formatDateForDB(row.F_DOB);
+        if (row.M_DOB) rowData.M_DOB = formatDateForDB(row.M_DOB);
         setEditData(rowData);
     };
 
@@ -71,9 +94,14 @@ const ViewFamily = () => {
 
     const handleSave = async () => {
         try {
+            const formattedData={
+                ...editData,
+                F_DOB: formatDateForDB(editData.F_DOB),
+                M_DOB: formatDateForDB(editData.M_DOB)
+            }
             await axios.put(`http://localhost:5000/families/${editData.EID}`, editData);
             const updatedDetails = familyDetails.map((family) =>
-                family.EID === editData.EID ? editData : family
+                family.EID === editData.EID ? formattedData : family
             );
             setFamilyDetails(updatedDetails);
             setFilteredDetails(updatedDetails);
@@ -90,9 +118,8 @@ const ViewFamily = () => {
     const handleDelete = async (eid) => {
         try {
             await axios.delete(`http://localhost:5000/families/${eid}`);
-            const updatedDetails = familyDetails.filter((family) => family.EID !== eid);
-            setFamilyDetails(updatedDetails);
-            setFilteredDetails(updatedDetails);
+            setFamilyDetails(familyDetails.filter((family) => family.EID !== eid));
+            setFilteredDetails(filteredDetails.filter((family) => family.EID !== eid));
             alert('Family details deleted successfully');
         } catch (error) {
             console.error('Error deleting family details:', error.message);
@@ -153,7 +180,7 @@ const ViewFamily = () => {
                             ))}
                             <td>
                                 <FaEdit className="icon-button-edit" onClick={() => handleEditClick(family)} title="Edit"/>
-                                <FaTrash className="icon-button-dlt" onClick={() => handleDelete(family)} title="Delete"/>
+                                <FaTrash className="icon-button-dlt" onClick={() => handleDelete(family.EID)} title="Delete"/>
                             </td>
                         </tr>
                     ))}
@@ -181,6 +208,8 @@ const ViewFamily = () => {
                                 name="F_DOB"
                                 value={editData.F_DOB}
                                 onChange={handleInputChange}
+                                min={minDOB.toISOString().split('T')[0]} // Minimum DOB: 100 years ago
+                                 max={maxDOB.toISOString().split('T')[0]}
                             />
                         </div>
                         <div className="form-group">
@@ -199,6 +228,8 @@ const ViewFamily = () => {
                                 name="M_DOB"
                                 value={editData.M_DOB}
                                 onChange={handleInputChange}
+                                min={minDOB.toISOString().split('T')[0]} // Minimum DOB: 100 years ago
+                                max={maxDOB.toISOString().split('T')[0]}
                             />
                         </div>
                         <button onClick={handleSave}>Save</button>
