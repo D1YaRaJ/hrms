@@ -24,6 +24,10 @@ const FamilyDetailsForm = () => {
     return `${day}-${month}-${year}`;
   };
 
+  const minDOB = new Date();
+  minDOB.setFullYear(minDOB.getFullYear() - 100); // Minimum DOB: 100 years ago
+  const maxDOB = new Date();
+  maxDOB.setFullYear(maxDOB.getFullYear() - 35); 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,6 +101,8 @@ const FamilyDetailsForm = () => {
             name="F_DOB"
             value={familyData.F_DOB}
             onChange={handleChange}
+            min={minDOB.toISOString().split('T')[0]} // Minimum DOB: 100 years ago
+            max={maxDOB.toISOString().split('T')[0]}
             required
           />
         </div>
@@ -122,6 +128,8 @@ const FamilyDetailsForm = () => {
             name="M_DOB"
             value={familyData.M_DOB}
             onChange={handleChange}
+            min={minDOB.toISOString().split('T')[0]} // Minimum DOB: 100 years ago
+            max={maxDOB.toISOString().split('T')[0]}
           />
         </div>
 
