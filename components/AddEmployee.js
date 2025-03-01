@@ -139,12 +139,19 @@ const EmployeeForm = () => {
         {/* Initial */}
         <div className="form-group">
           <label>Initial:</label>
-          <input
-            type="text"
+          <select
             name="INITIAL"
             value={formData.INITIAL}
             onChange={handleChange}
-          />
+            required
+          >
+            <option value="">Select Initial</option>
+            <option value="DR">DR</option>
+            <option value="MISS">MISS</option>
+            <option value="MR">MR</option>
+            <option value="MRS">MRS</option>
+            <option value="PROF">PROF</option>
+          </select>
         </div>
 
         {/* First Name */}
