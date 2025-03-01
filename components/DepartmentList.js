@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './DepartmentList.css';
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const DepartmentManagement = () => {
   const [departments, setDepartments] = useState([]);
@@ -92,7 +93,7 @@ const DepartmentManagement = () => {
       alert('Failed to delete department');
     }
   };
-  
+
   useEffect(() => {
     fetchDepartments();
   }, []);
@@ -112,22 +113,7 @@ const DepartmentManagement = () => {
           onChange={handleSearch}
         />
       </div>
-
-      {/* Column Selection */}
-      <div className="column-selection">
-        <h3>Select Columns to Display</h3>
-        {Object.keys(columns).map((col) => (
-          <label key={col}>
-            <input
-              type="checkbox"
-              checked={columns[col]}
-              onChange={() => handleColumnToggle(col)}
-              aria-label={`Toggle ${columnAliases[col] || col}`}
-            />
-            {columnAliases[col] || col}
-          </label>
-        ))}
-      </div>
+      
 
       {/* Table */}
       <table border="1" style={{ marginTop: '20px', width: '100%' }}>
@@ -146,8 +132,8 @@ const DepartmentManagement = () => {
                 <td key={col}>{department[col] || 'N/A'}</td>
               ))}
               <td>
-                <button onClick={() => handleEditClick(department)}>Modify</button>
-                <button onClick={() => handleDelete(department.DID)}>Delete</button>
+                <FaEdit className="icon-button-edit" onClick={() => handleEditClick(department)} title="Edit"/>
+                <FaTrash className="icon-button-dlt" onClick={() => handleDelete(department.DID)} title="Delete"/>
               </td>
             </tr>
           ))}
