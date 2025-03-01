@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './ViewFamily.css';
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const ViewFamily = () => {
     const [familyDetails, setFamilyDetails] = useState([]);
@@ -151,8 +152,8 @@ const ViewFamily = () => {
                                 <td key={col}>{family[col] || 'N/A'}</td>
                             ))}
                             <td>
-                                <button onClick={() => handleEditClick(family)}>Modify</button>
-                                <button onClick={() => handleDelete(family.EID)}>Delete</button>
+                                <FaEdit className="icon-button-edit" onClick={() => handleEditClick(family)} title="Edit"/>
+                                <FaTrash className="icon-button-dlt" onClick={() => handleDelete(family)} title="Delete"/>
                             </td>
                         </tr>
                     ))}
