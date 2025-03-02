@@ -159,6 +159,7 @@ app.get('/departments/search', (req, res) => {
         res.json(results);
     });
 });
+
 //API to Update department details
 app.put('/departments/:did', (req, res) => {
     const { did } = req.params;
@@ -180,40 +181,107 @@ app.put('/departments/:did', (req, res) => {
 
 //API to get attendance list
 app.get('/attendance', (req, res) => {
+    
     const sql = 'SELECT * FROM attendance';
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error fetching attendance:', err);
             res.status(500).send(err);
         } else {
+            const formattedResults = results.map(attendance => ({
+                ...attendance,
+                A_DATE: attendance.A_DATE.toISOString().split('T')[0] // Convert to yyyy-mm-dd
+            }));
             res.json(results);
         }
     });
 });
 //API to add attendance
 app.post('/add-attendance', (req, res) => {
+    console.log(req.body);
     const { EID, A_DATE, STATUS, LOGIN, LOGOUT } = req.body;
-    const sql = 'INSERT INTO ATTENDANCE (EID, A_DATE, STATUS, LOGIN, LOGOUT) VALUES (?, ?, ?, ?, ?)'; 
-    const values = [EID, A_DATE, STATUS, LOGIN, LOGOUT];
-    db.query(sql, values, (err, result) => {
+    const formattedData = {
+        ...req.body,
+        A_DATE: convertToMySQLDate(req.body.A_DATE)
+    };
+    console.log("Received Data:", { EID, A_DATE, STATUS, LOGIN, LOGOUT }); // Debugging
+
+    if (!EID || !A_DATE || !STATUS) {
+        console.error("Missing required fields");
+        return res.status(400).json({ message: "EID, A_DATE, and STATUS are required!" });
+    }
+    const sql = 'INSERT INTO ATTENDANCE (EID, A_DATE, STATUS, LOGIN, LOGOUT) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [EID, A_DATE, STATUS, LOGIN, LOGOUT], (err, result) => {
         if (err) {
-            console.error('Error adding attendance:', err.code); 
-            res.status(500).send(`Error adding attendance: ${err.message}`);
-        } else {
-            res.json({ message: 'Attendance added successfully', id: result.insertId });
+            console.error("Error adding attendance:", err.code, err.message); 
+            return res.status(500).json({ message: "Failed to add attendance", error: err.message });
         }
+        res.json({ message: "Attendance added successfully", id: result.insertId });
     });
 });
-//API to delete attendance
-app.delete('/attendance/:eid', (req, res) => {
+   // const moment = require('moment');
+
+   app.delete('/attendance/:eid', (req, res) => {
     const { eid } = req.params;
+
+    if (!eid) {
+        return res.status(400).json({ message: 'EID is required' });
+    }
+
+    console.log("Deleting attendance for EID:", eid);
+
     const sqlDelete = 'DELETE FROM ATTENDANCE WHERE EID = ?';
     db.query(sqlDelete, [eid], (err, result) => {
         if (err) {
             console.error('Error deleting attendance record:', err);
-            return res.status(500).send({ message: 'Failed to delete attendance record', error: err.message });
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'No attendance record found' });
         }
         res.status(200).json({ message: 'Attendance record deleted successfully' });
+    });
+});
+
+  
+const moment = require('moment');
+app.put('/attendance/:eid/:date', (req, res) => {
+    const { eid, date } = req.params;
+    const { status, login, logout, STATUS, LOGIN, LOGOUT } = req.body;
+
+    // Convert date to MySQL DATETIME format (YYYY-MM-DD HH:mm:ss)
+    const formattedDate = moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+    console.log(`🔍 Updating attendance for EID: ${eid}, Date: ${formattedDate}`);
+
+    let updateFields = [];
+    let values = [];
+
+    if (status || STATUS) {
+        updateFields.push("STATUS = ?");
+        values.push(status || STATUS);
+    }
+    if (login || LOGIN) {
+        updateFields.push("LOGIN = ?");
+        values.push(login || LOGIN);
+    }
+    if (logout || LOGOUT) {
+        updateFields.push("LOGOUT = ?");
+        values.push(logout || LOGOUT);
+    }
+
+    values.push(eid, formattedDate);
+
+    const sqlUpdate = `UPDATE ATTENDANCE SET ${updateFields.join(", ")} WHERE EID = ? AND A_DATE = ?`;
+
+    db.query(sqlUpdate, values, (err, result) => {
+        if (err) {
+            console.error('❌ Database error:', err);
+        } else if (result.affectedRows === 0) {
+            console.warn('⚠️ No attendance record found.');
+        } else {
+            console.log('✅ Attendance record updated successfully.');
+        }
     });
 });
 
@@ -463,12 +531,7 @@ app.get('/families', (req, res) => {
             console.error(err);
             res.status(500).send('Error fetching family details');
         } else {
-            const formattedResults = results.map(family => ({
-                ...family,
-                F_DOB: family.F_DOB.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                M_DOB: family.M_DOB.toISOString().split('T')[0]
-            }));
-            res.json(formattedResults);
+            res.status(200).json(results);
         }
     });
 });
@@ -536,33 +599,176 @@ app.get('/leave', (req, res) => {
       else { res.json(results);}
     });
 });
-// API to add a new leave entry
-  app.post('/add-leave', (req, res) => {
-    console.log(req.body); 
+// API to add a new leave entry   
+app.post("/add-leave", (req, res) => {
     const { EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } = req.body;
-    const values = [EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE];
-    const sql = 'INSERT INTO LEAVES (EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE) VALUES (?, ?, ?, ?, ?, ?)';
-    console.log("SQL Query:", sql); 
-    console.log("Values:", values);
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error(err); 
-        return res.status(500).send(err);}
-      res.json({ message: 'Leave added successfully', id: result.insertId });
+
+    // Validate required fields
+    if (!EID || !LTYPE || !NO_OF_DAYS || !FROM_DATE || !TO_DATE) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Ensure EID and NO_OF_DAYS are integers
+    const employeeID = parseInt(EID);
+    const days = parseInt(NO_OF_DAYS);
+
+    if (isNaN(employeeID) || isNaN(days) || days < 1) {
+        return res.status(400).json({ error: "Invalid Employee ID or Number of Days" });
+    }
+
+    // Format dates correctly (yyyy-mm-dd for MySQL)
+    const formatDate = (date) => {
+        const parts = date.split("-");
+        return parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
+    };
+
+    const formattedData = {
+        EID: employeeID,
+        LTYPE,
+        APPROVAL: APPROVAL || "PENDING", // Default to "PENDING" if not provided
+        NO_OF_DAYS: days,
+        FROM_DATE: formatDate(FROM_DATE),
+        TO_DATE: formatDate(TO_DATE)
+    };
+
+    // Insert into database
+    const sql = "INSERT INTO LEAVES SET ?";
+    db.query(sql, formattedData, (err, result) => {
+        if (err) {
+            console.error("Failed to add leave:", err);
+            return res.status(500).json({ error: "Database insertion failed", details: err });
+        }
+        res.json({ message: "Leave added successfully", id: result.insertId });
     });
 });
-//API to delete a leave entry
-app.delete('/leave/:eid', (req, res) => {
-    const { eid } = req.params;
-    const sqlDelete = 'DELETE FROM LEAVES WHERE EID = ?';
-    db.query(sqlDelete, [eid], (err, result) => {
-      if (err) {
-        console.error('Error deleting leave record:', err);
-        return res.status(500).send({ message: 'Failed to delete leave record', error: err.message });}
-      res.status(200).json({ message: 'Leave record deleted successfully' });
+
+const handleUpdate = async () => {
+    if (!editData) return;
+
+    const { EID, FROM_DATE, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } = editData;
+
+    try {
+        const response = await axios.put(`http://localhost:5000/leave/${EID}/${FROM_DATE}`, {
+            LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE
+        });
+
+        if (response.status === 200) {
+            const updatedLeaves = leaves.map((leave, index) =>
+                index === editIndex ? { ...leave, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } : leave
+            );
+
+            setLeaves(updatedLeaves);
+            setEditIndex(null);
+            alert("Leave record updated successfully");
+        } else {
+            alert("Failed to update leave record");
+        }
+    } catch (error) {
+        console.error("Error updating leave record:", error);
+        alert("Failed to update leave record");
+    }
+};
+
+const handleDelete = async (eid, from_date) => {
+    if (!window.confirm(`Are you sure you want to delete this leave record?`)) return;
+
+    try {
+        const response = await axios.delete(`http://localhost:5000/leave/${eid}/${from_date}`);
+
+        if (response.status === 200) {
+            const updatedLeaves = leaves.filter((leave) => !(leave.EID === eid && leave.FROM_DATE === from_date));
+            setLeaves(updatedLeaves);
+            alert(`Leave record deleted successfully`);
+        } else {
+            alert("Failed to delete leave record");
+        }
+    } catch (error) {
+        console.error("Error deleting leave record:", error);
+        alert("Failed to delete leave record");
+    }
+};
+//API to UPDATE Leave
+app.put("/leave/:eid/:date", async (req, res) => {
+    try {
+        const { eid, date } = req.params;
+        let { LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } = req.body;
+
+        console.log("🔹 Received Params:", { eid, date });
+        console.log("🔹 Received Body:", req.body);
+
+        // If FROM_DATE is missing, use the URL param date
+        if (!FROM_DATE) {
+            FROM_DATE = date;
+            console.log("⚠️ FROM_DATE was missing in request. Using date param instead.");
+        }
+
+        if (!eid || !date || !LTYPE || !APPROVAL || !NO_OF_DAYS || !FROM_DATE || !TO_DATE) {
+            return res.status(400).json({ message: "❌ Missing required fields" });
+        }
+
+        const formattedFromDate = FROM_DATE.split("T")[0];
+        const formattedToDate = TO_DATE.split("T")[0];
+        const formattedParamDate = date.split("T")[0];
+
+        console.log("📅 Formatted Dates:", { formattedFromDate, formattedToDate, formattedParamDate });
+
+        const checkSql = "SELECT * FROM LEAVES WHERE EID = ? AND FROM_DATE = ?";
+        const [checkResult] = await db.promise().query(checkSql, [eid, formattedParamDate]);
+
+        if (checkResult.length === 0) {
+            return res.status(404).json({ message: "⚠️ No leave record found to update" });
+        }
+
+        const updateSQL = `
+            UPDATE LEAVES 
+            SET LTYPE = ?, APPROVAL = ?, NO_OF_DAYS = ?, FROM_DATE = ?, TO_DATE = ?
+            WHERE EID = ? AND FROM_DATE = ?
+        `;
+
+        const [result] = await db.promise().query(updateSQL, [
+            LTYPE, APPROVAL, NO_OF_DAYS, formattedFromDate, formattedToDate, eid, formattedParamDate
+        ]);
+
+        console.log("✅ Update Result:", result);
+
+        if (result.affectedRows > 0) {
+            res.json({ message: "✅ Leave record updated successfully" });
+        } else {
+            res.status(404).json({ message: "⚠️ No leave record found to update" });
+        }
+    } catch (error) {
+        console.error("❌ Error updating leave record:", error);
+        res.status(500).json({ message: "❌ Failed to update leave record", error: error.message });
+    }
+});
+
+
+// ✅ API to Delete Leave
+app.delete('/leave/:eid/:from_date', (req, res) => {
+    const { eid, from_date } = req.params;
+
+    if (!eid || !from_date) {
+        return res.status(400).json({ message: 'EID and From Date are required' });
+    }
+
+    console.log(`🔍 Deleting leave for EID: ${eid}, From Date: ${from_date}`);
+
+    const sqlDelete = 'DELETE FROM LEAVES WHERE EID = ? AND From_Date = ? LIMIT 1';
+
+    db.query(sqlDelete, [eid, from_date], (err, result) => {
+        if (err) {
+            console.error('❌ Database error:', err);
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            console.warn('⚠️ No leave record found.');
+            return res.status(404).json({ message: 'No leave record found' });
+        }
+        console.log('✅ Leave record deleted successfully.');
+        res.status(200).json({ message: 'Leave record deleted successfully' });
     });
 });
-  
+
 // API to get all payroll entries
 app.get('/payroll', (req, res) => {
     const { eid } = req.query;
