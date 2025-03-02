@@ -2,38 +2,44 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}:${(date.getMonth() + 1).toString().padStart(2, '0')}:${date.getDate().toString().padStart(2, '0')}`;
+};
+
+const formatTime = (timeString) => {
+    if (!timeString) return '';
+    const date = new Date(`1970-01-01T${timeString}`);
+    return date.toTimeString().split(' ')[0]; // Extract HH:MM:SS
+};
+
 const AttendanceList = () => {
     const [attendance, setAttendance] = useState([]);
-    const [filteredAttendance, setFilteredAttendance] = useState([]); // Store filtered results
+    const [filteredAttendance, setFilteredAttendance] = useState([]);
     const [searchEID, setSearchEID] = useState("");
-    const [editRecord, setEditRecord] = useState(null); // Store record being edited
-    const [modalVisible, setModalVisible] = useState(false); // Toggle modal visibility
+    const [editRecord, setEditRecord] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
-    // Fetch all attendance records
     const fetchAttendance = async () => {
         try {
             const response = await axios.get("http://localhost:5000/attendance");
             setAttendance(response.data);
-            setFilteredAttendance(response.data); // Store full data for reset
+            setFilteredAttendance(response.data);
         } catch (error) {
             console.error("Error fetching attendance:", error);
             alert("Failed to fetch attendance records");
         }
     };
 
-    // Search functionality
     const handleSearch = () => {
         if (!searchEID.trim()) {
-            setFilteredAttendance(attendance); // Reset list if search is empty
+            setFilteredAttendance(attendance);
             return;
         }
-
         const filtered = attendance.filter(record =>
-            record.EID.toString().includes(searchEID.trim()) // Partial match
+            record.EID.toString().includes(searchEID.trim())
         );
-
         setFilteredAttendance(filtered);
-
         if (filtered.length === 0) {
             alert(`No attendance records found for Employee ID: ${searchEID}`);
         }
@@ -42,15 +48,14 @@ const AttendanceList = () => {
     useEffect(() => {
         fetchAttendance();
     }, []);
-    // Delete a specific attendance record
+
     const handleDelete = async (eid) => {
         if (!window.confirm(`Are you sure you want to delete attendance for Employee ID ${eid}`)) {
             return;
         }
-
         try {
             await axios.delete(`http://localhost:5000/attendance/${eid}`);
-            const updatedAttendance = attendance.filter(record => !(record.eid === eid));
+            const updatedAttendance = attendance.filter(record => !(record.EID === eid));
             setAttendance(updatedAttendance);
             setFilteredAttendance(updatedAttendance);
             alert(`Attendance record deleted successfully`);
@@ -60,20 +65,18 @@ const AttendanceList = () => {
         }
     };
 
-    // Open edit modal for a specific record
     const handleEdit = (record) => {
         setEditRecord(record);
         setModalVisible(true);
     };
 
-    // Handle updating attendance record
     const handleUpdate = async () => {
         try {
             await axios.put(`http://localhost:5000/attendance/${editRecord.EID}/${editRecord.A_DATE}`, editRecord);
-            setAttendance(attendance.map(record => 
+            setAttendance(attendance.map(record =>
                 record.EID === editRecord.EID && record.A_DATE === editRecord.A_DATE ? editRecord : record
             ));
-            setFilteredAttendance(filteredAttendance.map(record => 
+            setFilteredAttendance(filteredAttendance.map(record =>
                 record.EID === editRecord.EID && record.A_DATE === editRecord.A_DATE ? editRecord : record
             ));
             alert("Attendance updated successfully");
@@ -84,15 +87,9 @@ const AttendanceList = () => {
         }
     };
 
-    useEffect(() => {
-        fetchAttendance();
-    }, []);
-
     return (
         <div>
             <h2>Attendance Records</h2>
-
-            {/* Search Box and Search Button */}
             <input 
                 type="text" 
                 placeholder="Enter Employee ID" 
@@ -101,7 +98,6 @@ const AttendanceList = () => {
             />
             <button onClick={handleSearch} style={{ marginLeft: '10px' }}>Search</button>
 
-            {/* Attendance Table */}
             <table border="1" style={{ width: '100%', marginTop: '10px' }}>
                 <thead>
                     <tr>
@@ -118,10 +114,10 @@ const AttendanceList = () => {
                         filteredAttendance.map((record) => (
                             <tr key={`${record.EID}-${record.A_DATE}`}>
                                 <td>{record.EID}</td>
-                                <td>{record.A_DATE}</td>
+                                <td>{formatDate(record.A_DATE)}</td>
                                 <td>{record.STATUS}</td>
-                                <td>{record.LOGIN}</td>
-                                <td>{record.LOGOUT}</td>
+                                <td>{formatTime(record.LOGIN)}</td>
+                                <td>{formatTime(record.LOGOUT)}</td>
                                 <td>
                                     <FaEdit 
                                         style={{ color: 'blue', cursor: 'pointer', marginRight: '10px' }} 
@@ -129,7 +125,7 @@ const AttendanceList = () => {
                                     />
                                     <FaTrash 
                                         style={{ color: 'red', cursor: 'pointer' }} 
-                                        onClick={() => handleDelete(record.EID, record.A_DATE)} 
+                                        onClick={() => handleDelete(record.EID)} 
                                     />
                                 </td>
                             </tr>
@@ -142,7 +138,6 @@ const AttendanceList = () => {
                 </tbody>
             </table>
 
-            {/* Edit Modal */}
             {modalVisible && editRecord && (
                 <div style={{
                     position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
