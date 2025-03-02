@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./EmployeeList.css";
-import { FaEdit, FaTrash, FaCog, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCog, FaTimes, FaSearch } from "react-icons/fa";
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [columns, setColumns] = useState({
     EID: true,
     INITIAL: true,
@@ -86,24 +88,51 @@ const EmployeeManagement = () => {
   const fetchEmployees = async () => {
     try {
       const response = await axios.get("http://localhost:5000/employees");
+      console.log("Data from backend:", response.data); // Debug: Log the data from the backend
       const formattedData = response.data.map((emp) => ({
         ...emp,
+        EID: emp.EID.toString(), // Ensure EID is a string
         DOB: formatDateForDisplay(emp.DOB),
         DATE_OF_JOIN: formatDateForDisplay(emp.DATE_OF_JOIN),
         PPROFEXP_FROM: formatDateForDisplay(emp.PPROFEXP_FROM),
         PPROFEXP_TO: formatDateForDisplay(emp.PPROFEXP_TO),
       }));
       setEmployees(formattedData);
+      setFilteredEmployees(formattedData); // Initialize filtered employees
     } catch (error) {
       console.error("Error fetching employees:", error);
       alert("Failed to fetch employee details");
     }
   };
 
+  // Handle search automatically when searchQuery changes
+  useEffect(() => {
+    const query = searchQuery.toLowerCase().trim();
+    console.log("Search Query:", query); // Debug: Log the search query
+
+    if (!query) {
+      // If the search query is empty, reset the filtered list to all employees
+      setFilteredEmployees(employees);
+      return;
+    }
+
+    const filtered = employees.filter((employee) => {
+      // Check if any field includes the search query
+      return Object.values(employee).some((value) => {
+        const stringValue = value?.toString().toLowerCase() || "";
+        return stringValue.includes(query);
+      });
+    });
+
+    console.log("Filtered Employees:", filtered); // Debug: Log the filtered results
+    setFilteredEmployees(filtered);
+  }, [searchQuery, employees]);
+
   const handleDelete = async (eid) => {
     try {
       await axios.delete(`http://localhost:5000/employees/${eid}`);
       setEmployees(employees.filter((employee) => employee.EID !== eid));
+      setFilteredEmployees(filteredEmployees.filter((employee) => employee.EID !== eid));
       alert("Employee deleted successfully");
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -159,6 +188,9 @@ const EmployeeManagement = () => {
       setEmployees(
         employees.map((emp) => (emp.EID === editData.EID ? formattedData : emp))
       );
+      setFilteredEmployees(
+        filteredEmployees.map((emp) => (emp.EID === editData.EID ? formattedData : emp))
+      );
       setEditRow(null);
       alert("Employee details updated successfully");
     } catch (error) {
@@ -178,7 +210,15 @@ const EmployeeManagement = () => {
   return (
     <div>
       <h1>Employee Management</h1>
-      <button onClick={fetchEmployees}>View Employees</button>
+      {/* Search Input */}
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search employees..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
       <button onClick={() => setShowColumnSelector(!showColumnSelector)}>
         <FaCog /> Column Settings
       </button>
@@ -210,7 +250,7 @@ const EmployeeManagement = () => {
           </tr>
         </thead>
         <tbody>
-          {employees.map((employee) => (
+          {filteredEmployees.map((employee) => (
             <tr key={employee.EID}>
               {Object.keys(columns).map((col) => 
                 columns[col] && <td key={col}>{employee[col] || "N/A"}</td>
