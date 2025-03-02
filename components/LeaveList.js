@@ -4,46 +4,62 @@ import { FaEdit, FaTrash, FaSave, FaTimes } from "react-icons/fa"; // Icons
 import "./LeaveList.css";
 
 const LeaveList = () => {
-    
     const [editIndex, setEditIndex] = useState(null);
     const [editData, setEditData] = useState({});
- const [leaves, setLeaves] = useState([]);
-const [fullLeaves, setFullLeaves] = useState([]); // Store full data separately
-const [searchEID, setSearchEID] = useState("");
+    const [leaves, setLeaves] = useState([]);
+    const [fullLeaves, setFullLeaves] = useState([]); // Store full data separately
+    const [searchEID, setSearchEID] = useState("");
 
-const fetchLeaves = async () => {
-    try {
-        const response = await axios.get("http://localhost:5000/leave");
-        setLeaves(response.data);
-        setFullLeaves(response.data); // Keep full copy of data
-    } catch (error) {
-        console.error("Error fetching leave data:", error);
-        alert("Failed to fetch leave details");
-    }
-};
+    // Fetch leave data
+    const fetchLeaves = async () => {
+        try {
+            const response = await axios.get("http://localhost:5000/leave");
+            const formattedData = response.data.map(leave => ({
+                ...leave,
+                FROM_DATE: formatDate(leave.FROM_DATE),
+                TO_DATE: formatDate(leave.TO_DATE)
+            }));
+            setLeaves(formattedData);
+            setFullLeaves(formattedData); // Keep full copy of data
+        } catch (error) {
+            console.error("Error fetching leave data:", error);
+            alert("Failed to fetch leave details");
+        }
+    };
 
-const handleSearch = () => {
-    if (!searchEID.trim()) {
-        setLeaves(fullLeaves); // Reset to full list when search is empty
-        return;
-    }
+    useEffect(() => {
+        fetchLeaves();
+    }, []);
 
-    const filtered = fullLeaves.filter((leave) =>
-        leave.EID.toString().includes(searchEID.trim()) // Partial match search
-    );
+    // Format date (YYYY-MM-DD)
+    const formatDate = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
-    setLeaves(filtered);
+    // Handle search by Employee ID
+    const handleSearch = () => {
+        if (!searchEID.trim()) {
+            setLeaves(fullLeaves); // Reset to full list when search is empty
+            return;
+        }
 
-    if (filtered.length === 0) {
-        alert(`No leave records found for Employee ID: ${searchEID}`);
-    }
-};
+        const filtered = fullLeaves.filter((leave) =>
+            leave.EID.toString().includes(searchEID.trim()) // Partial match search
+        );
 
-useEffect(() => {
-    fetchLeaves();
-}, []);
+        setLeaves(filtered);
 
+        if (filtered.length === 0) {
+            alert(`No leave records found for Employee ID: ${searchEID}`);
+        }
+    };
 
+    // Handle delete
     const handleDelete = async (eid, from_date) => {
         if (!window.confirm(`Are you sure you want to delete this leave record?`)) return;
 
@@ -58,30 +74,37 @@ useEffect(() => {
         }
     };
 
+    // Handle edit
     const handleEdit = (index) => {
         setEditIndex(index);
         setEditData({ ...leaves[index] });
     };
 
+    // Handle input change when editing
     const handleEditChange = (e) => {
         const { name, value } = e.target;
         setEditData({ ...editData, [name]: value });
     };
 
+    // ✅ FIXED: Handle Update Function
     const handleUpdate = async () => {
         if (!editData) return;
-
+    
         const { EID, FROM_DATE, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } = editData;
-
+    
         try {
             await axios.put(`http://localhost:5000/leave/${EID}/${FROM_DATE}`, {
-                LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE
+                LTYPE,
+                APPROVAL,
+                NO_OF_DAYS,
+                FROM_DATE,  // ✅ Ensure FROM_DATE is included
+                TO_DATE
             });
-
+    
             const updatedLeaves = leaves.map((leave, index) =>
-                index === editIndex ? { ...leave, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } : leave
+                index === editIndex ? { ...leave, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } : leave
             );
-
+    
             setLeaves(updatedLeaves);
             setEditIndex(null);
             alert("Leave record updated successfully");
@@ -90,10 +113,7 @@ useEffect(() => {
             alert("Failed to update leave record");
         }
     };
-
-    useEffect(() => {
-        fetchLeaves();
-    }, []);
+    
 
     return (
         <div>
