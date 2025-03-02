@@ -27,10 +27,10 @@ app.get('/employees', (req, res) => {
             // Convert dates to yyyy-mm-dd format before sending to the frontend
             const formattedResults = results.map(employee => ({
                 ...employee,
-                DOB: employee.DOB.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                DATE_OF_JOIN: employee.DATE_OF_JOIN.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                PPROFEXP_FROM: employee.PPROFEXP_FROM.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                PPROFEXP_TO: employee.PPROFEXP_TO.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                DOB: employee.DOB ? employee.DOB.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                DATE_OF_JOIN: employee.DATE_OF_JOIN ? employee.DATE_OF_JOIN.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                PPROFEXP_FROM: employee.PPROFEXP_FROM ? employee.PPROFEXP_FROM.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                PPROFEXP_TO: employee.PPROFEXP_TO ? employee.PPROFEXP_TO.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
             }));
             res.json(formattedResults);
         }
