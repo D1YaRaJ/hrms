@@ -2,11 +2,20 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
-const formatDate = (dateString) => {
+// Convert MySQL date (YYYY-MM-DD) to Display format (DD-MM-YYYY)
+const formatDateForDisplay = (dateString) => {
     const date = new Date(dateString);
-    return `${date.getFullYear()}:${(date.getMonth() + 1).toString().padStart(2, '0')}:${date.getDate().toString().padStart(2, '0')}`;
+    return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
 };
 
+// Convert Display date (DD-MM-YYYY) to MySQL format (YYYY-MM-DD)
+const formatDateForMySQL = (dateString) => {
+    const [day, month, year] = dateString.split("-");
+    return `${year}-${month}-${day}`;
+};
+
+
+// Format Time (HH:MM:SS)
 const formatTime = (timeString) => {
     if (!timeString) return '';
     const date = new Date(`1970-01-01T${timeString}`);
@@ -23,13 +32,21 @@ const AttendanceList = () => {
     const fetchAttendance = async () => {
         try {
             const response = await axios.get("http://localhost:5000/attendance");
-            setAttendance(response.data);
-            setFilteredAttendance(response.data);
+            const formattedData = response.data.map(record => ({
+                ...record,
+                A_DATE: formatDateForDisplay(record.A_DATE)
+            }));
+            setAttendance(formattedData);
+            setFilteredAttendance(formattedData);
         } catch (error) {
             console.error("Error fetching attendance:", error);
             alert("Failed to fetch attendance records");
         }
     };
+
+    useEffect(() => {
+        fetchAttendance();
+    }, []);
 
     const handleSearch = () => {
         if (!searchEID.trim()) {
@@ -45,17 +62,13 @@ const AttendanceList = () => {
         }
     };
 
-    useEffect(() => {
-        fetchAttendance();
-    }, []);
-
-    const handleDelete = async (eid) => {
+    const handleDelete = async (eid, aDate) => {
         if (!window.confirm(`Are you sure you want to delete attendance for Employee ID ${eid}`)) {
             return;
         }
         try {
-            await axios.delete(`http://localhost:5000/attendance/${eid}`);
-            const updatedAttendance = attendance.filter(record => !(record.EID === eid));
+            await axios.delete(`http://localhost:5000/attendance/${eid}/${formatDateForMySQL(aDate)}`);
+            const updatedAttendance = attendance.filter(record => !(record.EID === eid && record.A_DATE === aDate));
             setAttendance(updatedAttendance);
             setFilteredAttendance(updatedAttendance);
             alert(`Attendance record deleted successfully`);
@@ -72,13 +85,18 @@ const AttendanceList = () => {
 
     const handleUpdate = async () => {
         try {
-            await axios.put(`http://localhost:5000/attendance/${editRecord.EID}/${editRecord.A_DATE}`, editRecord);
-            setAttendance(attendance.map(record =>
-                record.EID === editRecord.EID && record.A_DATE === editRecord.A_DATE ? editRecord : record
-            ));
-            setFilteredAttendance(filteredAttendance.map(record =>
-                record.EID === editRecord.EID && record.A_DATE === editRecord.A_DATE ? editRecord : record
-            ));
+            const updatedRecord = {
+                ...editRecord,
+                A_DATE: formatDateForMySQL(editRecord.A_DATE)
+            };
+
+            await axios.put(`http://localhost:5000/attendance/${editRecord.EID}/${updatedRecord.A_DATE}`, updatedRecord);
+            
+            const updatedAttendance = attendance.map(record =>
+                record.EID === editRecord.EID && record.A_DATE === editRecord.A_DATE ? { ...editRecord } : record
+            );
+            setAttendance(updatedAttendance);
+            setFilteredAttendance(updatedAttendance);
             alert("Attendance updated successfully");
             setModalVisible(false);
         } catch (error) {
@@ -114,7 +132,7 @@ const AttendanceList = () => {
                         filteredAttendance.map((record) => (
                             <tr key={`${record.EID}-${record.A_DATE}`}>
                                 <td>{record.EID}</td>
-                                <td>{formatDate(record.A_DATE)}</td>
+                                <td>{record.A_DATE}</td>
                                 <td>{record.STATUS}</td>
                                 <td>{formatTime(record.LOGIN)}</td>
                                 <td>{formatTime(record.LOGOUT)}</td>
@@ -125,7 +143,7 @@ const AttendanceList = () => {
                                     />
                                     <FaTrash 
                                         style={{ color: 'red', cursor: 'pointer' }} 
-                                        onClick={() => handleDelete(record.EID)} 
+                                        onClick={() => handleDelete(record.EID, record.A_DATE)} 
                                     />
                                 </td>
                             </tr>
