@@ -4,20 +4,57 @@ import axios from 'axios';
 import './Salary.css';
 
 const AddSalary = () => {
-  const [EID, setEID] = useState('');
-  const [BASIC_SAL, setBasicSal] = useState('');
-  const [AGP, setAgp] = useState('');
-  const [ESI, setEsi] = useState('');
-  const [LOAN, setLoan] = useState('');
-  const [IT, setIt] = useState('');
+  const [salaryData, setSalaryData] = useState({
+    EID: '',
+    BASIC_SAL: '',
+    AGP: '',
+    ESI: '',
+    LOAN: '',
+    IT: '',
+    SAL_DATE: '',
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setSalaryData({ ...salaryData, [name]: value });
+  };
+
+  // Helper function to format date from yyyy-mm-dd to dd-mm-yyyy
+  const formatDate = (date) => {
+    if (!date) return '';
+    const [year, month, day] = date.split('-');
+    return `${day}-${month}-${year}`;
+  };
+
+  const today = new Date();
+  const maxDate = today.toISOString().split('T')[0];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const salaryData = { EID, BASIC_SAL, AGP, ESI, LOAN, IT };
+    const formattedData = {
+      ...salaryData
+    };
+
     try {
-      const response = await axios.post('http://localhost:5000/add-salary', salaryData);
+      const response = await axios.post('http://localhost:5000/add-salary', formattedData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       alert('Salary details added successfully');
+      console.log(response.data);
+
+      // Clear the form
+      setSalaryData({
+        EID: '',
+        BASIC_SAL: '',
+        AGP: '',
+        ESI: '',
+        LOAN: '',
+        IT: '',
+        SAL_DATE: '',
+      });
     } catch (error) {
       console.error('Error adding salary details:', error);
       alert('Error adding salary details');
@@ -26,14 +63,15 @@ const AddSalary = () => {
 
   return (
     <div className="salary-form">
-      <h2>Enter Salary Details</h2>
+      <h1>Enter Salary Details</h1>
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <label>EID</label>
           <input
             type="number"
-            value={EID}
-            onChange={(e) => setEID(e.target.value)}
+            name="EID"
+            value={salaryData.EID}
+            onChange={handleChange}
             required
           />
         </div>
@@ -41,8 +79,9 @@ const AddSalary = () => {
           <label>Basic Salary</label>
           <input
             type="number"
-            value={BASIC_SAL}
-            onChange={(e) => setBasicSal(e.target.value)}
+            name="BASIC_SAL"
+            value={salaryData.BASIC_SAL}
+            onChange={handleChange}
             required
           />
         </div>
@@ -50,8 +89,9 @@ const AddSalary = () => {
           <label>AGP</label>
           <input
             type="number"
-            value={AGP}
-            onChange={(e) => setAgp(e.target.value)}
+            name="AGP"
+            value={salaryData.AGP}
+            onChange={handleChange}
             required
           />
         </div>
@@ -59,8 +99,9 @@ const AddSalary = () => {
           <label>ESI</label>
           <input
             type="number"
-            value={ESI}
-            onChange={(e) => setEsi(e.target.value)}
+            name="ESI"
+            value={salaryData.ESI}
+            onChange={handleChange}
             required
           />
         </div>
@@ -68,8 +109,9 @@ const AddSalary = () => {
           <label>Loan</label>
           <input
             type="number"
-            value={LOAN}
-            onChange={(e) => setLoan(e.target.value)}
+            name="LOAN"
+            value={salaryData.LOAN}
+            onChange={handleChange}
             required
           />
         </div>
@@ -77,8 +119,20 @@ const AddSalary = () => {
           <label>Income Tax</label>
           <input
             type="number"
-            value={IT}
-            onChange={(e) => setIt(e.target.value)}
+            name="IT"
+            value={salaryData.IT}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <label>Salary Date</label>
+          <input
+            type="date"
+            name="SAL_DATE"
+            value={salaryData.SAL_DATE}
+            onChange={handleChange}
+            max={maxDate}
             required
           />
         </div>
