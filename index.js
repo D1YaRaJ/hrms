@@ -593,7 +593,12 @@ app.get('/families', (req, res) => {
             console.error(err);
             res.status(500).send('Error fetching family details');
         } else {
-            res.status(200).json(results);
+            const formattedResults = results.map(family => ({
+                ...family,
+                F_DOB: family.F_DOB.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                M_DOB: family.M_DOB.toISOString().split('T')[0]
+            }));
+            res.json(formattedResults);
         }
     });
 });
