@@ -11,12 +11,20 @@ app.use(cors({
   }));
 app.use(bodyParser.json());
 
-const convertToMySQLDate = (dateString) => {
-  if (!dateString) return null;
-  const [day, month, year] = dateString.split('-');
-  return `${year}-${month}-${day}`;
-};
+function convertToMySQLDate(dateString) {
+    if (!dateString) return null;
 
+    // If the date is already in YYYY-MM-DD format, return it as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+    }
+
+    // Otherwise, assume it's in DD-MM-YYYY format and convert it
+    const [day, month, year] = dateString.split('-');
+    return `${year}-${month}-${day}`;
+}
+
+// API endpoint to get all employees
 // API endpoint to get all employees
 app.get('/employees', (req, res) => {
     const sql = 'SELECT * FROM EMPLOYEE';
@@ -27,10 +35,10 @@ app.get('/employees', (req, res) => {
             // Convert dates to yyyy-mm-dd format before sending to the frontend
             const formattedResults = results.map(employee => ({
                 ...employee,
-                DOB: employee.DOB.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                DATE_OF_JOIN: employee.DATE_OF_JOIN.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                PPROFEXP_FROM: employee.PPROFEXP_FROM.toISOString().split('T')[0], // Convert to yyyy-mm-dd
-                PPROFEXP_TO: employee.PPROFEXP_TO.toISOString().split('T')[0], // Convert to yyyy-mm-dd
+                DOB: employee.DOB ? employee.DOB.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                DATE_OF_JOIN: employee.DATE_OF_JOIN ? employee.DATE_OF_JOIN.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                PPROFEXP_FROM: employee.PPROFEXP_FROM ? employee.PPROFEXP_FROM.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
+                PPROFEXP_TO: employee.PPROFEXP_TO ? employee.PPROFEXP_TO.toISOString().split('T')[0] : null, // Convert to yyyy-mm-dd
             }));
             res.json(formattedResults);
         }
@@ -99,6 +107,8 @@ app.put('/employees/:eid', (req, res) => {
 });
 
 
+
+
 //API to display all department
 app.get('/departments', (req, res) => {
     const sql = 'SELECT * FROM DEPARTMENT';
@@ -159,7 +169,6 @@ app.get('/departments/search', (req, res) => {
         res.json(results);
     });
 });
-
 //API to Update department details
 app.put('/departments/:did', (req, res) => {
     const { did } = req.params;
@@ -221,17 +230,17 @@ app.post('/add-attendance', (req, res) => {
 });
    // const moment = require('moment');
 
-   app.delete('/attendance/:eid/:date', (req, res) => {
-    const { eid, date } = req.params;
-    
-    if (!eid || !date) {
-        return res.status(400).json({ message: 'EID and A_DATE are required' });
+app.delete('/attendance/:eid', (req, res) => {
+    const { eid } = req.params;
+
+    if (!eid) {
+        return res.status(400).json({ message: 'EID is required' });
     }
 
-    console.log("Deleting attendance for EID:", eid, "Date:", date);
+    console.log("Deleting attendance for EID:", eid);
 
-    const sqlDelete = 'DELETE FROM ATTENDANCE WHERE EID = ? AND A_DATE = ?';
-    db.query(sqlDelete, [eid, date], (err, result) => {
+    const sqlDelete = 'DELETE FROM ATTENDANCE WHERE EID = ?';
+    db.query(sqlDelete, [eid], (err, result) => {
         if (err) {
             console.error('Error deleting attendance record:', err);
             return res.status(500).json({ message: 'Database error', error: err.message });
@@ -243,37 +252,31 @@ app.post('/add-attendance', (req, res) => {
     });
 });
 
-
   
 const moment = require('moment');
-
 app.put('/attendance/:eid/:date', (req, res) => {
     const { eid, date } = req.params;
-    const { status, login, logout } = req.body;
+    const { status, login, logout, STATUS, LOGIN, LOGOUT } = req.body;
 
-    // Convert the received date (YYYY-MM-DD) into MySQL DATETIME format
-    const formattedDate = moment(date, 'YYYY-MM-DD').format('YYYY-MM-DD HH:mm:ss');
+    // Convert date to MySQL DATETIME format (YYYY-MM-DD HH:mm:ss)
+    const formattedDate = moment(date).format('YYYY-MM-DD HH:mm:ss');
 
     console.log(`🔍 Updating attendance for EID: ${eid}, Date: ${formattedDate}`);
 
     let updateFields = [];
     let values = [];
 
-    if (status) {
+    if (status || STATUS) {
         updateFields.push("STATUS = ?");
-        values.push(status);
+        values.push(status || STATUS);
     }
-    if (login) {
+    if (login || LOGIN) {
         updateFields.push("LOGIN = ?");
-        values.push(login);
+        values.push(login || LOGIN);
     }
-    if (logout) {
+    if (logout || LOGOUT) {
         updateFields.push("LOGOUT = ?");
-        values.push(logout);
-    }
-
-    if (updateFields.length === 0) {
-        return res.status(400).json({ error: "No fields to update" });
+        values.push(logout || LOGOUT);
     }
 
     values.push(eid, formattedDate);
@@ -283,17 +286,13 @@ app.put('/attendance/:eid/:date', (req, res) => {
     db.query(sqlUpdate, values, (err, result) => {
         if (err) {
             console.error('❌ Database error:', err);
-            return res.status(500).json({ error: 'Database error', details: err });
         } else if (result.affectedRows === 0) {
             console.warn('⚠️ No attendance record found.');
-            return res.status(404).json({ message: 'No attendance record found' });
         } else {
             console.log('✅ Attendance record updated successfully.');
-            return res.status(200).json({ message: 'Attendance updated successfully' });
         }
     });
 });
-
 
 //API to add qualifications
 app.post('/add-qualification', (req, res) => {
@@ -467,46 +466,99 @@ app.delete('/employee-accounts/:eid', (req, res) => {
   });
 
 //API to add salary details
-app.post('/add-salary', (req, res) => {
-    const { EID, BASIC_SAL, AGP, ESI, LOAN, IT } = req.body;
-    const sql = 'INSERT INTO SALARY (EID, BASIC_SAL, AGP, ESI, LOAN, IT) VALUES (?, ?, ?, ?, ?, ?)';
-    db.query(sql, [EID, BASIC_SAL, AGP, ESI, LOAN, IT], (err, result) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send('Error adding salary details');
-        } else {res.status(200).send('Salary details added successfully');}
-    });
-});
-//API to View Salary Details
+// ===================== Salary Endpoints =====================
+
+// Get all salaries
 app.get('/salaries', (req, res) => {
     const sql = 'SELECT * FROM SALARY';
     db.query(sql, (err, results) => {
         if (err) {
-            console.error(err);
-            res.status(500).send('Error fetching all salary details');
-        } else {res.status(200).json(results); }
+            console.error('Error fetching salaries:', err);
+            return res.status(500).send(err);
+        }
+        const formattedResults = results.map(salary => ({
+            ...salary,
+            DATE: salary.DATE ? salary.DATE.toISOString().split('T')[0] : null,  // Convert DATE to yyyy-mm-dd
+        }));
+        res.json(formattedResults);
     });
 });
-//API to get salary details for specific employee
-app.get('/salaries/:eid', (req, res) => {
-    const { eid } = req.params;
-    const sql = 'SELECT * FROM SALARY WHERE EID = ?';
-    db.query(sql, [eid], (err, results) => {
+
+app.post('/add-salary', (req, res) => {
+    console.log('Received Salary Data:', req.body);
+
+    // Validate required fields
+    const { EID, BASIC_SAL, AGP, ESI, LOAN, IT, DATE } = req.body;
+    if (!EID || !BASIC_SAL || !AGP || !ESI || !LOAN || !IT || !DATE) {
+        return res.status(400).json({ error: 'All fields are required.' });
+    }
+
+    // Validate DATE format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(DATE)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+
+    // Prepare data for insertion
+    const formattedData = {
+        EID: parseInt(EID),
+        BASIC_SAL: parseFloat(BASIC_SAL),
+        AGP: parseFloat(AGP),
+        ESI: parseFloat(ESI),
+        LOAN: parseFloat(LOAN),
+        IT: parseFloat(IT),
+        DATE: DATE // Already in YYYY-MM-DD format
+    };
+
+    // Log the SQL query
+    const sql = 'INSERT INTO SALARY SET ?';
+    console.log('Executing SQL Query:', sql, formattedData);
+
+    // Execute the query
+    db.query(sql, formattedData, (err, result) => {
         if (err) {
-            console.error(err);
-            res.status(500).send('Error fetching salary details for the employee');
-        } else {res.status(200).json(results);}
+            console.error('Error adding salary:', err);
+            console.error('SQL Error Code:', err.code); // Log the error code
+            console.error('SQL Error Message:', err.sqlMessage); // Log the error message
+            return res.status(500).json({ error: 'Failed to add salary record', details: err });
+        }
+        res.json({ message: 'Salary record added successfully', id: result.insertId });
     });
 });
-//API to delete salary details
-app.delete('/salaries/:eid', (req, res) => {
-    const { eid } = req.params; 
-    const sqlDelete = 'DELETE FROM SALARY WHERE EID = ?';
-    db.query(sqlDelete, [eid], (err, result) => {
-      if (err) {
-        console.error('Error deleting  record:', err);
-        return res.status(500).send({ message: 'Failed to delete record', error: err.message });}
-      res.status(200).json({ message: ' record deleted successfully' });
+
+// Update a salary record (by ID)
+app.put('/salaries/:salary_id', (req, res) => {
+    const { salary_id } = req.params;
+
+    const formattedData = {
+        ...req.body,
+        DATE: convertToMySQLDate(req.body.DATE)
+    };
+
+    const sql = 'UPDATE SALARY SET ? WHERE SALARY_ID = ?';
+    db.query(sql, [formattedData, salary_id], (err, result) => {
+        if (err) {
+            console.error('Error updating salary:', err);
+            return res.status(500).send(err);
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Salary record not found' });
+        }
+        res.json({ message: 'Salary record updated successfully' });
+    });
+});
+
+// Delete a salary record (by ID)
+app.delete('/salaries/:salary_id', (req, res) => {
+    const { salary_id } = req.params;
+
+    const sql = 'DELETE FROM SALARY WHERE SALARY_ID = ?';
+    db.query(sql, [salary_id], (err, result) => {
+        if (err) {
+            console.error('Error deleting salary:', err);
+            return res.status(500).send(err);
+        }
+        res.json({ message: 'Salary record deleted successfully' });
     });
 });
 
@@ -601,21 +653,27 @@ app.delete('/families/:eid', (req, res) => {
     });
 });
 
-//API to get all leave entries
+
+
+// API to fetch leave data
 app.get('/leave', (req, res) => {
     const sql = 'SELECT * FROM LEAVES';
     db.query(sql, (err, results) => {
-      if (err) { res.status(500).send(err);} 
-      else { res.json(results);}
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            res.json(results);
+        }
     });
 });
-// API to add a new leave entry   
-app.post("/add-leave", (req, res) => {
+
+// API to add a new leave entry
+app.post('/add-leave', (req, res) => {
     const { EID, LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } = req.body;
 
     // Validate required fields
     if (!EID || !LTYPE || !NO_OF_DAYS || !FROM_DATE || !TO_DATE) {
-        return res.status(400).json({ error: "All fields are required" });
+        return res.status(400).json({ error: 'All fields are required' });
     }
 
     // Ensure EID and NO_OF_DAYS are integers
@@ -623,110 +681,65 @@ app.post("/add-leave", (req, res) => {
     const days = parseInt(NO_OF_DAYS);
 
     if (isNaN(employeeID) || isNaN(days) || days < 1) {
-        return res.status(400).json({ error: "Invalid Employee ID or Number of Days" });
+        return res.status(400).json({ error: 'Invalid Employee ID or Number of Days' });
     }
 
     // Format dates correctly (yyyy-mm-dd for MySQL)
     const formatDate = (date) => {
-        const parts = date.split("-");
+        const parts = date.split('-');
         return parts.length === 3 ? `${parts[0]}-${parts[1]}-${parts[2]}` : null;
     };
 
     const formattedData = {
         EID: employeeID,
         LTYPE,
-        APPROVAL: APPROVAL || "PENDING", // Default to "PENDING" if not provided
+        APPROVAL: APPROVAL || 'PENDING', // Default to "PENDING" if not provided
         NO_OF_DAYS: days,
         FROM_DATE: formatDate(FROM_DATE),
-        TO_DATE: formatDate(TO_DATE)
+        TO_DATE: formatDate(TO_DATE),
     };
 
     // Insert into database
-    const sql = "INSERT INTO LEAVES SET ?";
+    const sql = 'INSERT INTO LEAVES SET ?';
     db.query(sql, formattedData, (err, result) => {
         if (err) {
-            console.error("Failed to add leave:", err);
-            return res.status(500).json({ error: "Database insertion failed", details: err });
+            console.error('Failed to add leave:', err);
+            return res.status(500).json({ error: 'Database insertion failed', details: err });
         }
-        res.json({ message: "Leave added successfully", id: result.insertId });
+        res.json({ message: 'Leave added successfully', id: result.insertId });
     });
 });
 
-const handleUpdate = async () => {
-    if (!editData) return;
-
-    const { EID, FROM_DATE, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } = editData;
-
-    try {
-        const response = await axios.put(`http://localhost:5000/leave/${EID}/${FROM_DATE}`, {
-            LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE
-        });
-
-        if (response.status === 200) {
-            const updatedLeaves = leaves.map((leave, index) =>
-                index === editIndex ? { ...leave, LTYPE, APPROVAL, NO_OF_DAYS, TO_DATE } : leave
-            );
-
-            setLeaves(updatedLeaves);
-            setEditIndex(null);
-            alert("Leave record updated successfully");
-        } else {
-            alert("Failed to update leave record");
-        }
-    } catch (error) {
-        console.error("Error updating leave record:", error);
-        alert("Failed to update leave record");
-    }
-};
-
-const handleDelete = async (eid, from_date) => {
-    if (!window.confirm(`Are you sure you want to delete this leave record?`)) return;
-
-    try {
-        const response = await axios.delete(`http://localhost:5000/leave/${eid}/${from_date}`);
-
-        if (response.status === 200) {
-            const updatedLeaves = leaves.filter((leave) => !(leave.EID === eid && leave.FROM_DATE === from_date));
-            setLeaves(updatedLeaves);
-            alert(`Leave record deleted successfully`);
-        } else {
-            alert("Failed to delete leave record");
-        }
-    } catch (error) {
-        console.error("Error deleting leave record:", error);
-        alert("Failed to delete leave record");
-    }
-};
-//API to UPDATE Leave
-app.put("/leave/:eid/:date", async (req, res) => {
+// API to update leave data
+app.put('/leave/:eid/:date', async (req, res) => {
     try {
         const { eid, date } = req.params;
         let { LTYPE, APPROVAL, NO_OF_DAYS, FROM_DATE, TO_DATE } = req.body;
 
-        console.log("🔹 Received Params:", { eid, date });
-        console.log("🔹 Received Body:", req.body);
+        console.log('🔹 Received Params:', { eid, date });
+        console.log('🔹 Received Body:', req.body);
 
         // If FROM_DATE is missing, use the URL param date
         if (!FROM_DATE) {
             FROM_DATE = date;
-            console.log("⚠️ FROM_DATE was missing in request. Using date param instead.");
+            console.log('⚠️ FROM_DATE was missing in request. Using date param instead.');
         }
 
         if (!eid || !date || !LTYPE || !APPROVAL || !NO_OF_DAYS || !FROM_DATE || !TO_DATE) {
-            return res.status(400).json({ message: "❌ Missing required fields" });
+            return res.status(400).json({ message: '❌ Missing required fields' });
         }
 
-        const formattedFromDate = FROM_DATE.split("T")[0];
-        const formattedToDate = TO_DATE.split("T")[0];
-        const formattedParamDate = date.split("T")[0];
+        const formattedFromDate = FROM_DATE.split('T')[0];
+        const formattedToDate = TO_DATE.split('T')[0];
+        const formattedParamDate = date.split('T')[0];
 
-        console.log("📅 Formatted Dates:", { formattedFromDate, formattedToDate, formattedParamDate });
+        console.log('📅 Formatted Dates:', { formattedFromDate, formattedToDate, formattedParamDate });
 
-        const checkSql = "SELECT * FROM LEAVES WHERE EID = ? AND FROM_DATE = ?";
+        const checkSql = 'SELECT * FROM LEAVES WHERE EID = ? AND FROM_DATE = ?';
         const [checkResult] = await db.promise().query(checkSql, [eid, formattedParamDate]);
 
         if (checkResult.length === 0) {
-            return res.status(404).json({ message: "⚠️ No leave record found to update" });
+            return res.status(404).json({ message: '⚠️ No leave record found to update' });
         }
 
         const updateSQL = `
@@ -736,23 +749,23 @@ app.put("/leave/:eid/:date", async (req, res) => {
         `;
 
         const [result] = await db.promise().query(updateSQL, [
-            LTYPE, APPROVAL, NO_OF_DAYS, formattedFromDate, formattedToDate, eid, formattedParamDate
+            LTYPE, APPROVAL, NO_OF_DAYS, formattedFromDate, formattedToDate, eid, formattedParamDate,
         ]);
 
-        console.log("✅ Update Result:", result);
+        console.log('✅ Update Result:', result);
 
         if (result.affectedRows > 0) {
-            res.json({ message: "✅ Leave record updated successfully" });
+            res.json({ message: '✅ Leave record updated successfully' });
         } else {
-            res.status(404).json({ message: "⚠️ No leave record found to update" });
+            res.status(404).json({ message: '⚠️ No leave record found to update' });
         }
     } catch (error) {
-        console.error("❌ Error updating leave record:", error);
-        res.status(500).json({ message: "❌ Failed to update leave record", error: error.message });
+        console.error('❌ Error updating leave record:', error);
+        res.status(500).json({ message: '❌ Failed to update leave record', error: error.message });
     }
 });
 
-// ✅ API to Delete Leave
+// API to delete leave data
 app.delete('/leave/:eid/:from_date', (req, res) => {
     const { eid, from_date } = req.params;
 
@@ -778,33 +791,119 @@ app.delete('/leave/:eid/:from_date', (req, res) => {
     });
 });
 
-// API to get all payroll entries
+
+
+function getEmployeeDetails(EID) {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT DATE_OF_JOIN FROM EMPLOYEE WHERE EID = ?';
+        db.query(sql, [EID], (err, results) => {
+            if (err) {
+                reject(err);
+            } else if (results.length === 0) {
+                reject(new Error('Employee not found'));
+            } else {
+                // Convert DATE_OF_JOIN to YYYY-MM-DD format
+                const joiningDate = results[0].DATE_OF_JOIN;
+                const [day, month, year] = joiningDate.split('-');
+                const formattedJoiningDate = `${year}-${month}-${day}`;
+                console.log('Original Joining Date:', joiningDate);
+                console.log('Formatted Joining Date:', formattedJoiningDate);
+                resolve(formattedJoiningDate);
+            }
+        });
+    });
+}
+
+
 app.get('/payroll', (req, res) => {
-    const { eid } = req.query;
-    let sql = 'SELECT * FROM PAYROLL';
-    let values = [];
-    if (eid) {
-        sql += ' WHERE EID = ?';
-        values = [eid];}
-    db.query(sql, values, (err, results) => {
-        if (err) {res.status(500).send(err);}
-         else { res.json(results);}
+    const sql = 'SELECT * FROM PAYROLL';
+    db.query(sql, (err, results) => {
+        if (err) {
+            return res.status(500).send(err);
+        }
+
+        // Convert P_DATE to yyyy-mm-dd format before sending to frontend
+        const formattedResults = results.map(record => ({
+            ...record,
+            P_DATE: record.P_DATE ? record.P_DATE.toISOString().split('T')[0] : null,
+        }));
+        res.json(formattedResults);
     });
 });
-// API to add a new payroll entry
-app.post('/add-payroll', (req, res) => {
-    console.log(req.body); // Log the received data
-    const { EID, P_DATE, NO_OF_DAYS, PF, VA } = req.body;
-    const sql = 'INSERT INTO PAYROLL (EID, P_DATE, NO_OF_DAYS, PF, VA) VALUES (?, ?, ?, ?, ?)';
-    const values = [EID, P_DATE, NO_OF_DAYS, PF, VA];
-    db.query(sql, values, (err, result) => {
-      if (err) {
-        console.error(err); // Log SQL error
-        return res.status(500).send(err);}
-      res.json({ message: 'Payroll added successfully', id: result.insertId });
-    });
+
+app.post('/add-payroll', async (req, res) => {
+    console.log('Received data:', req.body);
+
+    const { EID, P_DATE } = req.body;
+
+    try {
+        // Fetch the employee's joining date
+        const joiningDate = await getEmployeeDetails(EID);
+
+        // Convert dates to Date objects for comparison
+        const payrollDate = new Date(P_DATE);
+        const employeeJoiningDate = new Date(joiningDate);
+
+        console.log('Payroll Date (from frontend):', P_DATE);
+        console.log('Payroll Date (converted):', payrollDate);
+        console.log('Joining Date (from database):', joiningDate);
+        console.log('Joining Date (converted):', employeeJoiningDate);
+
+        // Check if payroll date is after joining date
+        if (payrollDate <= employeeJoiningDate) {
+            console.log('Validation failed: Payroll date is before or equal to joining date');
+            return res.status(400).json({ message: 'Payroll date must be after the employee joining date' });
+        }
+
+        console.log('Validation passed: Payroll date is after joining date');
+
+        // Proceed to add payroll record
+        const formattedData = {
+            ...req.body,
+            P_DATE: convertToMySQLDate(P_DATE)
+        };
+
+        const sql = 'INSERT INTO PAYROLL SET ?';
+        db.query(sql, formattedData, (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ message: 'Failed to add payroll', error: err.message });
+            }
+            res.status(200).json({ message: 'Payroll record added successfully', id: result.insertId });
+        });
+    } catch (error) {
+        console.error('Error fetching employee details:', error);
+        res.status(500).json({ message: 'Failed to add payroll', error: error.message });
+    }
 });
-// API to UPDATE Payroll
+
+// 3. Delete payroll record (by EID and P_DATE — date acts like part of the composite key)
+app.delete('/payroll/:eid/:p_date', (req, res) => {
+    const { eid, p_date } = req.params;
+
+    if (!eid || !p_date) {
+        return res.status(400).json({ message: '❌ EID and Payroll Date are required' });
+    }
+
+    console.log(`🔍 Deleting payroll record for EID: ${eid}, Payroll Date: ${p_date}`);
+
+    const sqlDelete = 'DELETE FROM PAYROLL WHERE EID = ? AND P_DATE = ? LIMIT 1';
+
+    db.query(sqlDelete, [eid, p_date], (err, result) => {
+        if (err) {
+            console.error('❌ Database error:', err);
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            console.warn('⚠️ No payroll record found.');
+            return res.status(404).json({ message: 'No payroll record found' });
+        }
+        console.log('✅ Payroll record deleted successfully.');
+        res.status(200).json({ message: '✅ Payroll record deleted successfully' });
+    });
+  });
+
+
 app.put("/payroll/:eid/:p_date", async (req, res) => {
     try {
         const { eid, p_date } = req.params;
@@ -849,32 +948,6 @@ app.put("/payroll/:eid/:p_date", async (req, res) => {
         console.error("❌ Error updating payroll record:", error);
         res.status(500).json({ message: "❌ Failed to update payroll record", error: error.message });
     }
-});
-
-// API to delete a payroll entry
-app.delete('/payroll/:eid/:p_date', (req, res) => {
-    const { eid, p_date } = req.params;
-
-    if (!eid || !p_date) {
-        return res.status(400).json({ message: '❌ EID and Payroll Date are required' });
-    }
-
-    console.log(`🔍 Deleting payroll record for EID: ${eid}, Payroll Date: ${p_date}`);
-
-    const sqlDelete = 'DELETE FROM PAYROLL WHERE EID = ? AND P_DATE = ? LIMIT 1';
-
-    db.query(sqlDelete, [eid, p_date], (err, result) => {
-        if (err) {
-            console.error('❌ Database error:', err);
-            return res.status(500).json({ message: 'Database error', error: err.message });
-        }
-        if (result.affectedRows === 0) {
-            console.warn('⚠️ No payroll record found.');
-            return res.status(404).json({ message: 'No payroll record found' });
-        }
-        console.log('✅ Payroll record deleted successfully.');
-        res.status(200).json({ message: '✅ Payroll record deleted successfully' });
-    });
 });
 
 
