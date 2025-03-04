@@ -478,7 +478,7 @@ app.get('/salaries', (req, res) => {
         }
         const formattedResults = results.map(salary => ({
             ...salary,
-            DATE: salary.DATE ? salary.DATE.toISOString().split('T')[0] : null,  // Convert DATE to yyyy-mm-dd
+            SAL_DATE: salary.SAL_DATE ? salary.SAL_DATE.toISOString().split('T')[0] : null,  // Convert DATE to yyyy-mm-dd
         }));
         res.json(formattedResults);
     });
@@ -488,14 +488,14 @@ app.post('/add-salary', (req, res) => {
     console.log('Received Salary Data:', req.body);
 
     // Validate required fields
-    const { EID, BASIC_SAL, AGP, ESI, LOAN, IT, DATE } = req.body;
-    if (!EID || !BASIC_SAL || !AGP || !ESI || !LOAN || !IT || !DATE) {
+    const { EID, BASIC_SAL, AGP, ESI, LOAN, IT, SAL_DATE } = req.body;
+    if (!EID || !BASIC_SAL || !AGP || !ESI || !LOAN || !IT || !SAL_DATE) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
     // Validate DATE format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(DATE)) {
+    if (!dateRegex.test(SAL_DATE)) {
         return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
     }
 
@@ -507,7 +507,7 @@ app.post('/add-salary', (req, res) => {
         ESI: parseFloat(ESI),
         LOAN: parseFloat(LOAN),
         IT: parseFloat(IT),
-        DATE: DATE // Already in YYYY-MM-DD format
+        SAL_DATE: SAL_DATE // Already in YYYY-MM-DD format
     };
 
     // Log the SQL query
@@ -518,8 +518,6 @@ app.post('/add-salary', (req, res) => {
     db.query(sql, formattedData, (err, result) => {
         if (err) {
             console.error('Error adding salary:', err);
-            console.error('SQL Error Code:', err.code); // Log the error code
-            console.error('SQL Error Message:', err.sqlMessage); // Log the error message
             return res.status(500).json({ error: 'Failed to add salary record', details: err });
         }
         res.json({ message: 'Salary record added successfully', id: result.insertId });
@@ -527,16 +525,16 @@ app.post('/add-salary', (req, res) => {
 });
 
 // Update a salary record (by ID)
-app.put('/salaries/:salary_id', (req, res) => {
-    const { salary_id } = req.params;
+app.put('/salaries/:eid', (req, res) => {
+    const { eid } = req.params;
 
     const formattedData = {
         ...req.body,
-        DATE: convertToMySQLDate(req.body.DATE)
+        SAL_DATE: convertToMySQLDate(req.body.SAL_DATE)
     };
 
-    const sql = 'UPDATE SALARY SET ? WHERE SALARY_ID = ?';
-    db.query(sql, [formattedData, salary_id], (err, result) => {
+    const sql = 'UPDATE SALARY SET ? WHERE EID = ?';
+    db.query(sql, [formattedData, eid], (err, result) => {
         if (err) {
             console.error('Error updating salary:', err);
             return res.status(500).send(err);
@@ -549,11 +547,11 @@ app.put('/salaries/:salary_id', (req, res) => {
 });
 
 // Delete a salary record (by ID)
-app.delete('/salaries/:salary_id', (req, res) => {
-    const { salary_id } = req.params;
+app.delete('/salaries/:eid', (req, res) => {
+    const { eid } = req.params;
 
-    const sql = 'DELETE FROM SALARY WHERE SALARY_ID = ?';
-    db.query(sql, [salary_id], (err, result) => {
+    const sql = 'DELETE FROM SALARY WHERE EID = ?';
+    db.query(sql, [eid], (err, result) => {
         if (err) {
             console.error('Error deleting salary:', err);
             return res.status(500).send(err);
