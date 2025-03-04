@@ -752,7 +752,6 @@ app.put("/leave/:eid/:date", async (req, res) => {
     }
 });
 
-
 // ✅ API to Delete Leave
 app.delete('/leave/:eid/:from_date', (req, res) => {
     const { eid, from_date } = req.params;
@@ -805,17 +804,79 @@ app.post('/add-payroll', (req, res) => {
       res.json({ message: 'Payroll added successfully', id: result.insertId });
     });
 });
+// API to UPDATE Payroll
+app.put("/payroll/:eid/:p_date", async (req, res) => {
+    try {
+        const { eid, p_date } = req.params;
+        let { NO_OF_DAYS, PF, VA } = req.body;
+
+        console.log("🔹 Received Params:", { eid, p_date });
+        console.log("🔹 Received Body:", req.body);
+
+        if (!eid || !p_date || NO_OF_DAYS === undefined || PF === undefined || VA === undefined) {
+            return res.status(400).json({ message: "❌ Missing required fields" });
+        }
+
+        const formattedPDate = p_date.split("T")[0];
+
+        console.log("📅 Formatted Payroll Date:", formattedPDate);
+
+        const checkSql = "SELECT * FROM PAYROLL WHERE EID = ? AND P_DATE = ?";
+        const [checkResult] = await db.promise().query(checkSql, [eid, formattedPDate]);
+
+        if (checkResult.length === 0) {
+            return res.status(404).json({ message: "⚠️ No payroll record found to update" });
+        }
+
+        const updateSQL = `
+            UPDATE PAYROLL 
+            SET NO_OF_DAYS = ?, PF = ?, VA = ?
+            WHERE EID = ? AND P_DATE = ?
+        `;
+
+        const [result] = await db.promise().query(updateSQL, [
+            NO_OF_DAYS, PF, VA, eid, formattedPDate
+        ]);
+
+        console.log("✅ Update Result:", result);
+
+        if (result.affectedRows > 0) {
+            res.json({ message: "✅ Payroll record updated successfully" });
+        } else {
+            res.status(404).json({ message: "⚠️ No payroll record found to update" });
+        }
+    } catch (error) {
+        console.error("❌ Error updating payroll record:", error);
+        res.status(500).json({ message: "❌ Failed to update payroll record", error: error.message });
+    }
+});
+
 // API to delete a payroll entry
-app.delete('/payroll/:eid', (req, res) => {
-    const { eid } = req.params;
-    const sqlDelete = 'DELETE FROM PAYROLL WHERE EID = ?';
-    db.query(sqlDelete, [eid], (err, result) => {
-      if (err) {
-        console.error('Error deleting payroll record:', err);
-        return res.status(500).send({ message: 'Failed to delete payroll record', error: err.message });}
-      res.status(200).json({ message: 'payroll record deleted successfully' });
+app.delete('/payroll/:eid/:p_date', (req, res) => {
+    const { eid, p_date } = req.params;
+
+    if (!eid || !p_date) {
+        return res.status(400).json({ message: '❌ EID and Payroll Date are required' });
+    }
+
+    console.log(`🔍 Deleting payroll record for EID: ${eid}, Payroll Date: ${p_date}`);
+
+    const sqlDelete = 'DELETE FROM PAYROLL WHERE EID = ? AND P_DATE = ? LIMIT 1';
+
+    db.query(sqlDelete, [eid, p_date], (err, result) => {
+        if (err) {
+            console.error('❌ Database error:', err);
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        if (result.affectedRows === 0) {
+            console.warn('⚠️ No payroll record found.');
+            return res.status(404).json({ message: 'No payroll record found' });
+        }
+        console.log('✅ Payroll record deleted successfully.');
+        res.status(200).json({ message: '✅ Payroll record deleted successfully' });
     });
-  });
+});
+
 
 const PORT = 5000;
 app.listen(PORT, () => {
